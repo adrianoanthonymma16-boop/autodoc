@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-3.9-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR com duas interfaces disponíveis: ttkbootstrap (leve) e CustomTkinter (moderna).
+Automatize o preenchimento de documentos ODT/DOCX usando OCR — **v4.0-premium modular** com interface premium responsiva, arquitetura desacoplada e 16 bugs corrigidos.
 
 ---
 
@@ -133,54 +133,90 @@ Ambas as versões podem coexistir na mesma máquina — são instaladas em diret
 
 ## Estrutura do Projeto
 
+### v4.0-premium — Arquitetura Modular (atual)
+
 ```
 autodoc/
-├── run.py                    # Entry point tkinter
-├── run_ctk.py                # Entry point CustomTkinter
-├── build_installer.sh         # Gera instalador .run (tkinter)
-├── build_installer_ctk.sh     # Gera instalador .run (CustomTkinter)
-├── install.sh                 # Instalador interno tkinter
-├── install_ctk.sh             # Instalador interno CustomTkinter
-├── install_dependencies.sh
-├── iniciar.sh                 # Launcher tkinter
-├── iniciar_ctk.sh             # Launcher CustomTkinter
-├── desinstalar.sh             # Desinstalador tkinter
-├── desinstalar_ctk.sh         # Desinstalador CustomTkinter
-├── requirements.txt
-├── .editorconfig
-├── .gitattributes
-├── LICENSE.txt
-├── README.md
-├── CHANGELOG.md
-├── SECURITY.md
-├── .github/
-│   └── ISSUE_TEMPLATE/
-│       ├── bug_report.md
-│       └── feature_request.md
+├── run.py                      # Entry legacy ttkbootstrap
+├── run_ctk.py                  # Entry premium modular (ui.shell.Shell) com fallback legada
+├── instalar.sh                 # Instalador premium (remove antigo, instala novo)
+├── iniciar_ctk.sh              # Launcher CTk
+├── desinstalar_ctk.sh
+├── icon.png
 └── src/
-    ├── config.py
-    ├── validadores.py
-    ├── validadores_extra.py
-    ├── mensagens.py
-    ├── i18n.py
-    ├── logger.py
-    ├── preferencias.py
-    ├── historico.py
-    ├── ocr.py
-    ├── anexo_pdf.py
-    ├── anexo_heic.py
-    ├── modelo_odt.py
-    ├── modelo_docx.py
-    ├── modelos_salvos.py
-    ├── interface.py            # GUI tkinter/ttkbootstrap
-    └── interface_ctk.py        # GUI CustomTkinter
+    ├── config.py               # VERSAO=4.0-premium
+    ├── core/
+    │   ├── state.py            # AppState dataclass observável (desacopla UI)
+    │   └── bus.py              # EventBus
+    ├── services/
+    │   ├── modelo.py           # ModeloService (lote, validação)
+    │   ├── documento.py        # DocumentoService (PDF/HEIC/IMG)
+    │   ├── mapeamento.py       # MapeamentoService (undo/redo corrigido, backup atômico)
+    │   ├── extracao.py         # ExtracaoService (OCR em thread)
+    │   └── geracao.py          # GeracaoService
+    ├── ui/
+    │   ├── theme.py            # Design System LIGHT/DARK + FONTS
+    │   ├── shell.py            # Shell: sidebar responsiva + 5 views
+    │   ├── canvas/
+    │   │   └── image_canvas.py # ImageCanvas (zoom/pan cross-platform, coords corrigidas)
+    │   ├── components/
+    │   │   └── widgets.py      # card, kpi_card, pill, empty_state
+    │   └── views/
+    │       ├── modelo_view.py      # KPIs + busca + chips
+    │       ├── biblioteca_view.py  # tabela com seleção
+    │       ├── mapeamento_view.py  # progress + dual lists + canvas
+    │       ├── gerar_view.py       # preview + edição threaded
+    │       └── historico_view.py
+    ├── interface.py            # LEGADO ttkbootstrap 1877 linhas (mantido como fallback)
+    ├── interface_ctk.py        # LEGADO CTk monolito 1901 linhas (mantido como fallback)
+    ├── ocr.py                  # fix RGBA/L/P
+    ├── modelo_odt.py           # fix tail/spans + placeholders com "/" e espaço
+    ├── modelo_docx.py          # fix runs + placeholders com "/" e espaço
+    ├── modelos_salvos.py       # dedup por hash + escrita atômica
+    ├── anexo_pdf.py            # try/finally close
+    ├── anexo_heic.py           # .copy().convert("RGB")
+    └── validadores.py          # filetypes inclui *.heic
 ```
+
+### Antigo Monolito (v3.9 e anterior) — 1901 linhas inseparáveis
+
+> `src/interface_ctk.py:44` — classe única `AppDocumentosCTK` com ~62 métodos e 50+ atributos em `__init__` (estado + UI acoplados)
+
+```
+AppDocumentosCTK (1901 linhas)
+├── __init__ (45-103)                     # 50+ atributos misturados
+├── _criar_toolbar (109-129) / _criar_abas (135-155) / _configurar_atalhos (161-178) / _alternar_tema (184-192)
+├── ABA 1 — Modelo (198-490): _criar_aba_modelo, carregar_modelo (258-327), salvar_modelo_atual, _adicionar_modelo_ao_lote (371-413) com engolir exceção silenciosa, _atualizar_placeholders_unificados, _atualizar_lista_modelos_carregados, _remover_modelo_do_lote
+├── ABA 2 — Modelos Salvos (494-667): _criar_aba_modelos_salvos, _atualizar_tabela_modelos_salvos, _selecionar_linha_modelo, _usar_modelo_salvo, _remover_modelo_salvo
+├── ABA 3 — Anexar e Mapear (672-1390): dual lists, _bind_zoom_canvas/_zoom/_redesenhar_canvas_com_zoom/_pan (934-980), iniciar/desenhar/finalizar_retangulo (1098-1144) com pan_offset duplo, salvar_mapeamento, _sincronizar_lote_fontes, limpar, _desfazer/_refazer/_remover (1228-1297) com lógica invertida e lote dessincronizado, _exportar/_importar (1303-1390) sem repopular documentos
+├── ABA 4 — Gerar (1396-1704): extrair_e_editar_dados (1439-1471) síncrono trava UI, abrir_janela_edicao, salvar_dados_editados, _gerar_documento_unificado (1581-1659)
+├── ABA 5 — Historico (1709-1784)
+└── Infra (1789-1901): _iniciar_backup/_executar_backup/_tentar_restaurar_backup (backup não-atômico, sem checar arquivo existe)
+
+Estatísticas monolito:
+- interface_ctk.py: 1901 linhas, 1 classe, 62 métodos
+- interface.py:     1877 linhas, 1 classe, 60 métodos
+- Total GUI monolito: ~3778 linhas acopladas, sem testes unitários
+```
+
+Principais problemas corrigidos na v4.0 (16 bugs):
+`validadores heic` · `undo invertido` · `redo remove` · `lote dessync` · `pan_offset duplo` · `import sem documentos` · `backup fantasma` · `dedup só nome` · `docx perde formatação` · `ocr RGBA/L` · `zoom só Linux` · `odt tail/spans` · `docx runs split` · `OCR trava UI` · `lote engole erro` · `odt mimetype`
 
 ---
 
 ## Versões
 
-### v3.9 (atual)
+### v4.0-premium (atual) — Modular + Premium UI
+- **Arquitetura desacoplada** — `core/state.py` (AppState observável) + `services/` (modelo, documento, mapeamento, extracao, geracao) + `ui/` (theme, shell, canvas, views) — monolito 1901 linhas → 1403 linhas modulares
+- **UI premium responsiva** — sidebar dark `#0F172A` colapsável (<1100px), Design System LIGHT/DARK, KPIs, chips `{{campo}}`, progress bar, cards 16px, empty states
+- **Canvas corrigido** — zoom cross-platform (`Ctrl+MouseWheel` + `Ctrl+Button-4/5`), pan `Button-2`/`Shift+drag`, cálculo coords com `pan_x` + escala + clamp
+- **16 bugs corrigidos** — heic filetype, undo/redo invertido, lote dessync, pan duplo, import sem docs, backup, dedup hash, docx runs, ocr RGBA, odt tail/spans, OCR thread, pdf leak, etc.
+- **OCR não trava** — `ExtracaoService` em thread com barra de progresso
+- **Placeholders com `/` e espaço** — `{{PG/NOME GUERRA}}`, `{{PG/NOME_COMPLETO}}` agora detectados (regex `[^}]+`)
+- **Biblioteca robusta** — hash SHA256 + escrita atômica, fallback visual corrigido (`border_color transparent` → `c["border"]`)
+- **Instalador premium** — `instalar.sh` remove `autodoc.desktop` obsoleto, recria `autodoc-ctk.desktop` v4.0
+
+### v3.9
 - **Múltiplos modelos** — Botões "Anexar Individualmente" e "Anexar Vários" na aba Modelo
 - **Placeholders unificados** — Placeholders iguais entre modelos são mesclados automaticamente
 - **Lote de fontes** — Mapeie placeholders em vários documentos-fonte e gere uma saída por fonte
@@ -250,7 +286,7 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-3.9-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
@@ -374,52 +410,31 @@ chmod +x AutoDoc-*.run
 
 ```
 autodoc/
-├── run.py                    # Entry point tkinter
-├── run_ctk.py                # Entry point CustomTkinter
-├── build_installer.sh         # .run installer builder (tkinter)
-├── build_installer_ctk.sh     # .run installer builder (CustomTkinter)
-├── install.sh                 # Internal installer tkinter
-├── install_ctk.sh             # Internal installer CustomTkinter
-├── install_dependencies.sh
-├── iniciar.sh                 # Launcher tkinter
-├── iniciar_ctk.sh             # Launcher CustomTkinter
-├── desinstalar.sh             # Uninstaller tkinter
-├── desinstalar_ctk.sh         # Uninstaller CustomTkinter
-├── requirements.txt
-├── .editorconfig
-├── .gitattributes
-├── LICENSE.txt
-├── README.md
-├── CHANGELOG.md
-├── SECURITY.md
-├── .github/
-│   └── ISSUE_TEMPLATE/
-│       ├── bug_report.md
-│       └── feature_request.md
-└── src/
-    ├── config.py
-    ├── validadores.py
-    ├── validadores_extra.py
-    ├── mensagens.py
-    ├── i18n.py
-    ├── logger.py
-    ├── preferencias.py
-    ├── historico.py
-    ├── ocr.py
-    ├── anexo_pdf.py
-    ├── anexo_heic.py
-    ├── modelo_odt.py
-    ├── modelo_docx.py
-    ├── modelos_salvos.py
-    ├── interface.py            # GUI tkinter/ttkbootstrap
-    └── interface_ctk.py        # GUI CustomTkinter
+├── run.py                      # Entry legacy ttkbootstrap
+├── run_ctk.py                  # Entry premium modular (ui.shell.Shell) + fallback
+├── instalar.sh                 # Instalador premium v4.0
+├── iniciar_ctk.sh              # Launcher CTk
+├── desinstalar_ctk.sh
+├── src/
+│   ├── config.py               # VERSAO=4.0-premium
+│   ├── core/state.py + bus.py
+│   ├── services/{modelo,documento,mapeamento,extracao,geracao}.py
+│   ├── ui/{theme,shell,canvas/image_canvas,components/widgets,views/*}.py
+│   ├── interface.py            # LEGADO 1877 linhas
+│   └── interface_ctk.py        # LEGADO 1901 linhas
 ```
 
 ---
 
 ## Versions
 
-### v3.9 (current)
+### v4.0-premium (current) — Modular + Premium UI
+- Decoupled architecture — `core/state` + `services/` + `ui/` — 1901-line monolith → 1403 modular lines
+- Premium responsive UI — dark sidebar collapsible, Design System, KPIs, chips, progress
+- Fixed canvas (cross-platform zoom/pan, coords), 16 bugs, threaded OCR, placeholders with `/` and space supported
+- Atomic backup, hash dedup, HEIC filetype, RGBA OCR fix
+
+### v3.9
 - **Multiple templates** — "Attach Individually" and "Attach Multiple" buttons in the Template tab
 - **Unified placeholders** — Identical placeholders across templates are auto-merged
 - **Batch sources** — Map placeholders across multiple source documents, one output per source

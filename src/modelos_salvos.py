@@ -25,8 +25,10 @@ def _carregar_registros():
 
 def _salvar_registros(modelos):
     os.makedirs(PASTA_MODELOS, exist_ok=True)
-    with open(REGISTRO_MODELOS, 'w', encoding='utf-8') as f:
+    tmp = REGISTRO_MODELOS + ".tmp"
+    with open(tmp, 'w', encoding='utf-8') as f:
         json.dump({'modelos': modelos}, f, indent=2, ensure_ascii=False)
+    os.replace(tmp, REGISTRO_MODELOS)
 
 
 def listar_modelos():
@@ -34,13 +36,27 @@ def listar_modelos():
 
 
 def salvar_modelo(caminho_original, tipo, placeholders):
+    import hashlib
     modelos = _carregar_registros()
 
     nome_original = os.path.basename(caminho_original)
+    # Hash do arquivo para deduplicação por conteúdo, não só nome
+    try:
+        h = hashlib.sha256()
+        with open(caminho_original, 'rb') as fh:
+            for chunk in iter(lambda: fh.read(8192), b''):
+                h.update(chunk)
+        file_hash = h.hexdigest()[:16]
+    except Exception:
+        file_hash = None
 
     for m in modelos:
+        # Bloqueia só se mesmo nome E mesmo conteúdo (ou mesmo placeholders)
         if m.get('nome_original') == nome_original:
-            return False, "Um modelo com este nome já está salvo."
+            if file_hash and m.get('hash') == file_hash:
+                return False, "Este modelo já está salvo (mesmo arquivo)."
+            if set(m.get('placeholders', [])) == set(placeholders) and file_hash is None:
+                return False, "Um modelo com este nome e mesmos campos já está salvo."
 
     modelo_id = uuid.uuid4().hex[:12]
     nome_arquivo = f"{modelo_id}_{nome_original}"
@@ -54,7 +70,8 @@ def salvar_modelo(caminho_original, tipo, placeholders):
         'arquivo_salvo': nome_arquivo,
         'tipo': tipo,
         'placeholders': placeholders,
-        'data_adicao': datetime.now().isoformat()
+        'data_adicao': datetime.now().isoformat(),
+        'hash': file_hash
     })
 
     _salvar_registros(modelos)

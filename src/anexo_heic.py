@@ -43,9 +43,9 @@ def heic_para_imagem(caminho_heic):
         "raw",
         heif_file.mode,
         heif_file.stride
-    )
+    ).copy()
     
-    return imagem
+    return imagem.convert("RGB") if imagem.mode != "RGB" else imagem
 
 
 def heic_suportado():

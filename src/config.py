@@ -4,8 +4,8 @@ Configurações e constantes do aplicativo
 
 import os
 
-# Versão do app
-VERSAO = "3.8"
+# Versão do app - 4.0 Premium Modular
+VERSAO = "4.0-premium"
 
 # Pasta do usuário para salvar configurações
 PASTA_APP = os.path.expanduser("~/.autodoc")

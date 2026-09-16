@@ -47,9 +47,13 @@ def obter_filetypes_modelo():
 
 def obter_filetypes_anexo():
     """Retorna os filetypes para o filedialog de anexo"""
+    # Detecta heic dinâmicamente mas sempre expõe opção
+    heic_extra = " *.heic" if ".heic" in ANEXO_EXTENSOES else ""
     filetypes = [
-        ("Documentos fonte", "*.jpg *.jpeg *.png *.tiff *.pdf *.webp"),
-        ("Imagens", "*.jpg *.jpeg *.png *.tiff *.webp"),
+        (f"Documentos fonte", f"*.jpg *.jpeg *.png *.tiff *.pdf *.webp{heic_extra}"),
+        ("Imagens", f"*.jpg *.jpeg *.png *.tiff *.webp{heic_extra}"),
         ("PDF", "*.pdf"),
+        ("HEIC (iPhone)", "*.heic"),
+        ("Todos os arquivos", "*.*"),
     ]
     return filetypes

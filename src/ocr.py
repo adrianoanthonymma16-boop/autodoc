@@ -27,6 +27,20 @@ def preprocessar_imagem(imagem_pil):
     Returns:
         numpy.ndarray: Imagem processada em preto e branco
     """
+    # Normaliza modo PIL para RGB
+    if imagem_pil.mode == "RGBA":
+        bg = Image.new("RGB", imagem_pil.size, (255, 255, 255))
+        bg.paste(imagem_pil, mask=imagem_pil.split()[3])
+        imagem_pil = bg
+    elif imagem_pil.mode == "LA":
+        imagem_pil = imagem_pil.convert("RGB")
+    elif imagem_pil.mode == "P":
+        imagem_pil = imagem_pil.convert("RGB")
+    elif imagem_pil.mode == "L":
+        imagem_pil = imagem_pil.convert("RGB")
+    elif imagem_pil.mode != "RGB":
+        imagem_pil = imagem_pil.convert("RGB")
+
     # Converte PIL para OpenCV (RGB para BGR)
     img = cv2.cvtColor(np.array(imagem_pil), cv2.COLOR_RGB2BGR)
     

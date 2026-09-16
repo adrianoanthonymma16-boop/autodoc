@@ -32,23 +32,22 @@ def pdf_para_imagem(caminho_pdf):
     if not os.path.exists(caminho_pdf):
         raise Exception(f"Arquivo não encontrado: {caminho_pdf}")
     
-    # Abre o PDF
+    # Abre o PDF (garante fechamento mesmo em erro)
     pdf = pdfium.PdfDocument(caminho_pdf)
-    
-    if len(pdf) == 0:
-        pdf.close()
-        raise Exception("PDF vazio")
-    
-    # Pega a primeira página
-    page = pdf[0]
-    
-    # Renderiza como imagem (scale=2 = aproximadamente 150 DPI)
-    bitmap = page.render(scale=2)
-    imagem = bitmap.to_pil()
-    
-    pdf.close()
-    
-    return imagem
+    try:
+        if len(pdf) == 0:
+            raise Exception("PDF vazio")
+        # Pega a primeira página
+        page = pdf[0]
+        # Renderiza como imagem (scale=2 = aproximadamente 150 DPI)
+        bitmap = page.render(scale=2)
+        imagem = bitmap.to_pil()
+        return imagem
+    finally:
+        try:
+            pdf.close()
+        except Exception:
+            pass
 
 
 def pdf_suportado():
