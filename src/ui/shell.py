@@ -3,7 +3,7 @@ Shell - janela principal com sidebar responsiva
 """
 import os
 import customtkinter as ctk
-from ui.theme import get_colors, FONTS, LIGHT
+from ui.theme import get_colors, FONTS
 from config import VERSAO
 from core.state import AppState
 from services.modelo import ModeloService
@@ -60,13 +60,13 @@ class Shell:
         ctk.set_appearance_mode("light")
 
     def _build_layout(self):
-        c=get_colors()
+        c = get_colors()
         # root grid: sidebar + main
         self.root.grid_columnconfigure(1, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
 
         # sidebar
-        self.sidebar = ctk.CTkFrame(self.root, fg_color=LIGHT["sidebar"], corner_radius=0, width=220)
+        self.sidebar = ctk.CTkFrame(self.root, fg_color=c["sidebar"], corner_radius=0, width=220)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_propagate(False)
         self.sidebar.grid_rowconfigure(6, weight=1)
@@ -74,34 +74,34 @@ class Shell:
         # logo
         logo = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         logo.pack(fill="x", padx=16, pady=(18,12))
-        ctk.CTkLabel(logo, text="◆  AutoDoc", font=("Inter", 18, "bold"), text_color="white").pack(anchor="w")
-        ctk.CTkLabel(logo, text=f"v{VERSAO}  •  Premium", font=("Inter", 10), text_color="#94A3B8").pack(anchor="w")
+        ctk.CTkLabel(logo, text="◆  AutoDoc", font=("Inter", 18, "bold"), text_color=c["text"]).pack(anchor="w")
+        ctk.CTkLabel(logo, text=f"v{VERSAO}  •  Premium", font=("Inter", 10), text_color=c["text_faint"]).pack(anchor="w")
 
         # nav buttons
         self.nav_btns = {}
         for label, icon, key in NAV_ITEMS:
             btn = ctk.CTkButton(self.sidebar, text=f"{icon}   {label}", anchor="w",
-                                fg_color="transparent", hover_color=LIGHT["sidebar_hover"],
-                                text_color="#CBD5E1", corner_radius=10, height=38,
+                                fg_color="transparent", hover_color=c["sidebar_hover"],
+                                text_color=c["text_muted"], corner_radius=10, height=38,
                                 font=("Inter", 12), command=lambda k=key: self._switch(k))
             btn.pack(fill="x", padx=10, pady=3)
             self.nav_btns[key]=btn
 
         # stepper progress minimal
-        self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso", font=("Inter", 10, "bold"), text_color="#64748B")
+        self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso", font=("Inter", 10, "bold"), text_color=c["text_faint"])
         self.step_label.pack(anchor="w", padx=16, pady=(16,4))
-        self.step_bar = ctk.CTkProgressBar(self.sidebar, height=6, corner_radius=3, progress_color="#2563EB", fg_color="#1E293B")
+        self.step_bar = ctk.CTkProgressBar(self.sidebar, height=6, corner_radius=3, progress_color=c["primary"], fg_color=c["sidebar_hover"])
         self.step_bar.pack(fill="x", padx=16); self.step_bar.set(0)
 
         # bottom actions
         bottom = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         bottom.pack(side="bottom", fill="x", padx=10, pady=12)
         self.btn_theme = ctk.CTkButton(bottom, text="🌙  Modo escuro", height=32, corner_radius=10,
-                                       fg_color="#1E293B", hover_color="#334155", text_color="white",
+                                       fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"],
                                        command=self._toggle_theme)
         self.btn_theme.pack(fill="x", pady=4)
         ctk.CTkButton(bottom, text="Sobre", height=28, corner_radius=8, fg_color="transparent",
-                      text_color="#94A3B8", hover_color="#1E293B", command=self._sobre).pack(fill="x")
+                      text_color=c["text_faint"], hover_color=c["sidebar_hover"], command=self._sobre).pack(fill="x")
 
         # main area
         self.main = ctk.CTkFrame(self.root, fg_color=c["bg"], corner_radius=0)
@@ -135,11 +135,12 @@ class Shell:
                 self.step_label.configure(text="Progresso")
 
     def _switch(self, key):
+        c = get_colors()
         for k, btn in self.nav_btns.items():
             if k==key:
-                btn.configure(fg_color="#2563EB", text_color="white")
+                btn.configure(fg_color=c["primary"], text_color=c["surface"])
             else:
-                btn.configure(fg_color="transparent", text_color="#CBD5E1")
+                btn.configure(fg_color="transparent", text_color=c["text_muted"])
         self.views[key].tkraise()
         self.current=key
         # refresh historico when entering
@@ -185,17 +186,54 @@ class Shell:
             messagebox.showinfo("Redo" if ok else "Aviso", msg)
 
     def _toggle_theme(self):
-        cur=ctk.get_appearance_mode()
-        novo="Dark" if cur=="Light" else "Light"
+        cur = ctk.get_appearance_mode()
+        novo = "Dark" if cur == "Light" else "Light"
         ctk.set_appearance_mode(novo)
         set_preferencia("tema_ctk", novo.lower())
-        self.btn_theme.configure(text="☀  Modo claro" if novo=="Dark" else "🌙  Modo escuro")
+        self.btn_theme.configure(text="☀  Modo claro" if novo == "Dark" else "🌙  Modo escuro")
         log_info(f"Tema: {novo}")
-        # force re-create? colors will update on next render; simplest: recreate views colors
-        # Update main bg
-        from ui.theme import get_colors as gc
-        c=gc()
+        # Update all theme-dependent components
+        self._refresh_theme()
+
+    def _refresh_theme(self):
+        """Atualiza todos os componentes com as cores do novo tema"""
+        c = get_colors()
+        # sidebar
+        self.sidebar.configure(fg_color=c["sidebar"])
+        # logo
+        for child in self.sidebar.winfo_children():
+            if isinstance(child, ctk.CTkFrame):  # logo frame
+                for label in child.winfo_children():
+                    if isinstance(label, ctk.CTkLabel):
+                        if "AutoDoc" in label.cget("text"):
+                            label.configure(text_color=c["text"])
+                        elif "Premium" in label.cget("text"):
+                            label.configure(text_color=c["text_faint"])
+            elif isinstance(child, ctk.CTkButton):  # nav buttons handled in _switch
+                pass
+            elif isinstance(child, ctk.CTkLabel):  # step label
+                child.configure(text_color=c["text_faint"])
+            elif isinstance(child, ctk.CTkProgressBar):
+                child.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
+            elif isinstance(child, ctk.CTkFrame):  # bottom frame
+                for btn in child.winfo_children():
+                    if isinstance(btn, ctk.CTkButton):
+                        if "Modo" in btn.cget("text") or "escuro" in btn.cget("text") or "claro" in btn.cget("text"):
+                            btn.configure(fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"])
+                        elif "Sobre" in btn.cget("text"):
+                            btn.configure(text_color=c["text_faint"], hover_color=c["sidebar_hover"])
+        # main area
         self.main.configure(fg_color=c["bg"])
+        # nav buttons
+        self._switch(self.current)
+        # step bar
+        self.step_bar.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
+        # step label
+        self.step_label.configure(text_color=c["text_faint"])
+        # trigger view refreshes (they subscribe to state or use get_colors dynamically)
+        for view in self.views.values():
+            if hasattr(view, '_refresh'):
+                view._refresh()
 
     def _restore_prefs(self):
         prefs=carregar_preferencias()
