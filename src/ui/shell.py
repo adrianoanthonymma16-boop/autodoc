@@ -196,42 +196,49 @@ class Shell:
     def _refresh_theme(self):
         """Atualiza todos os componentes com as cores do novo tema"""
         c = get_colors()
-        # sidebar
-        self.sidebar.configure(fg_color=c["sidebar"])
-        # logo
-        for child in self.sidebar.winfo_children():
-            if isinstance(child, ctk.CTkFrame):  # logo frame
-                for label in child.winfo_children():
-                    if isinstance(label, ctk.CTkLabel):
-                        if "AutoDoc" in label.cget("text"):
-                            label.configure(text_color=c["text"])
-                        elif "Premium" in label.cget("text"):
-                            label.configure(text_color=c["text_faint"])
-            elif isinstance(child, ctk.CTkButton):  # nav buttons handled in _switch
-                pass
-            elif isinstance(child, ctk.CTkLabel):  # step label
-                child.configure(text_color=c["text_faint"])
-            elif isinstance(child, ctk.CTkProgressBar):
-                child.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
-            elif isinstance(child, ctk.CTkFrame):  # bottom frame
-                for btn in child.winfo_children():
-                    if isinstance(btn, ctk.CTkButton):
-                        if "Modo" in btn.cget("text") or "escuro" in btn.cget("text") or "claro" in btn.cget("text"):
-                            btn.configure(fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"])
-                        elif "Sobre" in btn.cget("text"):
-                            btn.configure(text_color=c["text_faint"], hover_color=c["sidebar_hover"])
-        # main area
+        self._refresh_sidebar_theme(c)
         self.main.configure(fg_color=c["bg"])
-        # nav buttons
         self._switch(self.current)
-        # step bar
         self.step_bar.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
-        # step label
         self.step_label.configure(text_color=c["text_faint"])
-        # trigger view refreshes (they subscribe to state or use get_colors dynamically)
         for view in self.views.values():
             if hasattr(view, '_refresh'):
                 view._refresh()
+
+    def _refresh_sidebar_theme(self, c):
+        """Atualiza sidebar, logo, labels, progress bar e botões inferiores"""
+        self.sidebar.configure(fg_color=c["sidebar"])
+        for child in self.sidebar.winfo_children():
+            if isinstance(child, ctk.CTkFrame):
+                self._refresh_logo_labels(child, c)
+            elif isinstance(child, ctk.CTkLabel):
+                child.configure(text_color=c["text_faint"])
+            elif isinstance(child, ctk.CTkProgressBar):
+                child.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
+            elif isinstance(child, ctk.CTkFrame):
+                self._refresh_bottom_buttons(child, c)
+
+    def _refresh_logo_labels(self, frame, c):
+        """Atualiza cores dos labels do logo (AutoDoc / Premium)"""
+        for label in frame.winfo_children():
+            if not isinstance(label, ctk.CTkLabel):
+                continue
+            text = label.cget("text")
+            if "AutoDoc" in text:
+                label.configure(text_color=c["text"])
+            elif "Premium" in text:
+                label.configure(text_color=c["text_faint"])
+
+    def _refresh_bottom_buttons(self, frame, c):
+        """Atualiza botões inferiores da sidebar (Modo claro/escuro, Sobre)"""
+        for btn in frame.winfo_children():
+            if not isinstance(btn, ctk.CTkButton):
+                continue
+            text = btn.cget("text")
+            if "Modo" in text or "escuro" in text or "claro" in text:
+                btn.configure(fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"])
+            elif "Sobre" in text:
+                btn.configure(text_color=c["text_faint"], hover_color=c["sidebar_hover"])
 
     def _restore_prefs(self):
         prefs=carregar_preferencias()
