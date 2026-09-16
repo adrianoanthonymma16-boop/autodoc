@@ -45,7 +45,7 @@ class GerarView(ctk.CTkFrame):
         actions=ctk.CTkFrame(self, fg_color="transparent")
         actions.pack(fill="x", padx=20, pady=8)
         ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=42, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=4)
-        ctk.CTkButton(actions, text="✏️  Preencher manual", height=42, corner_radius=10, fg_color=c["surface"], text_color=c["primary"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=4)
+        ctk.CTkButton(actions, text="✏️  Preencher manual", height=42, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["primary"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=4)
         ctk.CTkButton(actions, text="🚀  Gerar", height=42, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=4)
 
         self.status=ctk.CTkLabel(self, text="Dica: mapeie todos os campos para melhor resultado", font=FONTS["caption"], text_color=c["text_muted"])
@@ -115,7 +115,7 @@ class GerarView(ctk.CTkFrame):
         scroll.pack(fill="both", expand=True, padx=16, pady=10)
         entries={}
         for ph, val in dados_temp.items():
-            f=ctk.CTkFrame(scroll, fg_color=c["surface"], corner_radius=10, border_width=1, border_color=c["border"])
+            f=ctk.CTkFrame(scroll, fg_color=c["surface_elevated"], corner_radius=10, border_width=1, border_color=c["border"])
             f.pack(fill="x", pady=4)
             ctk.CTkLabel(f, text=f"{{{{{ph}}}}}", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(8,2))
             e=ctk.CTkTextbox(f, height=50, font=FONTS["body_small"])

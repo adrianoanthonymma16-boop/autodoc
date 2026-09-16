@@ -29,7 +29,7 @@ class BibliotecaView(ctk.CTkFrame):
         self.search = ctk.CTkEntry(toolbar, placeholder_text="Buscar por nome…", width=280, height=34, corner_radius=10, border_color=c["border"])
         self.search.pack(side="left")
         self.search.bind("<KeyRelease>", lambda e: self._refresh())
-        ctk.CTkButton(toolbar, text="↻ Atualizar", width=90, height=32, corner_radius=10, fg_color=c["surface"], text_color=c["text"], border_width=1, border_color=c["border"], command=self._refresh).pack(side="left", padx=6)
+        ctk.CTkButton(toolbar, text="↻ Atualizar", width=90, height=32, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["text"], border_width=1, border_color=c["border"], command=self._refresh).pack(side="left", padx=6)
         ctk.CTkButton(toolbar, text="Usar modelo", width=120, height=34, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], command=self._usar).pack(side="right", padx=4)
         ctk.CTkButton(toolbar, text="Remover", width=90, height=34, corner_radius=10, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover).pack(side="right", padx=4)
 
@@ -64,7 +64,8 @@ class BibliotecaView(ctk.CTkFrame):
                 return
             for m in modelos:
                 is_sel = self.selecionado==m['id']
-                r = ctk.CTkFrame(self.rows_frame, fg_color=c["surface_hover"] if is_sel else c["surface"], corner_radius=10, border_width=1, border_color=c["primary"] if is_sel else c["border"])
+                # use surface_elevated for rows, primary border when selected
+                r = ctk.CTkFrame(self.rows_frame, fg_color=c["surface_elevated"] if not is_sel else c["surface_hover"], corner_radius=10, border_width=1, border_color=c["primary"] if is_sel else c["border"])
                 r.pack(fill="x", pady=3)
                 r.bind("<Button-1>", lambda e, mid=m['id'], fr=r: self._select(mid, fr))
                 nome = m.get('nome_original','')[:38]
@@ -72,7 +73,7 @@ class BibliotecaView(ctk.CTkFrame):
                 n = str(len(m.get('placeholders', [])))
                 data = m.get('data_adicao','')[:10]
                 for txt, w in [(nome,300),(tipo,70),(n,70),(data,110)]:
-                    lbl = ctk.CTkLabel(r, text=txt, font=FONTS["body_small"], width=w, anchor="w")
+                    lbl = ctk.CTkLabel(r, text=txt, font=FONTS["body_small"], width=w, anchor="w", text_color=c["text"])
                     lbl.pack(side="left", padx=6, pady=8)
                     lbl.bind("<Button-1>", lambda e, mid=m['id'], fr=r: self._select(mid, fr))
                 self._rows.append((m['id'], r))

@@ -8,11 +8,13 @@ LIGHT = {
     "bg": "#F8FAFC",
     "surface": "#FFFFFF",
     "surface_hover": "#F1F5F9",
+    "surface_elevated": "#FFFFFF",
     "border": "#E2E8F0",
     "border_strong": "#CBD5E1",
     "text": "#0F172A",
     "text_muted": "#64748B",
     "text_faint": "#94A3B8",
+    "text_on_primary": "#FFFFFF",
     "primary": "#2563EB",
     "primary_hover": "#1D4ED8",
     "primary_soft": "#EFF6FF",
@@ -29,17 +31,20 @@ LIGHT = {
     "sidebar": "#0F172A",
     "sidebar_hover": "#1E293B",
     "sidebar_active": "#2563EB",
+    "icon": "#475569",
 }
 
 DARK = {
     "bg": "#020617",
-    "surface": "#0F172A",
-    "surface_hover": "#1E293B",
+    "surface": "#0B1220",           # dark blue surface instead of white
+    "surface_hover": "#111827",
+    "surface_elevated": "#1E293B",   # elevated cards
     "border": "#1E293B",
     "border_strong": "#334155",
-    "text": "#F1F5F9",
+    "text": "#E2E8F0",
     "text_muted": "#94A3B8",
     "text_faint": "#64748B",
+    "text_on_primary": "#0F172A",
     "primary": "#3B82F6",
     "primary_hover": "#2563EB",
     "primary_soft": "#1E293B",
@@ -56,6 +61,7 @@ DARK = {
     "sidebar": "#020617",
     "sidebar_hover": "#0F172A",
     "sidebar_active": "#3B82F6",
+    "icon": "#94A3B8",
 }
 
 FONTS = {

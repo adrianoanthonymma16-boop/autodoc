@@ -136,9 +136,12 @@ class MapeamentoView(ctk.CTkFrame):
             if filtro and filtro not in ph.lower(): continue
             mapped=ph in self.state.mapeamento
             sel=ph==self.state.placeholder_atual
-            bg=c["primary"] if sel else (c["success_soft"] if mapped else c["surface_hover"])
-            bd=c["primary"] if sel else (c["success"] if mapped else c["border"])
-            fg=c["surface"] if sel else (c["success"] if mapped else c["text"])
+            if sel:
+                bg=c["primary"]; bd=c["primary"]; fg=c["text_on_primary"]
+            elif mapped:
+                bg=c["success_soft"]; bd=c["success"]; fg=c["success"]
+            else:
+                bg=c["surface_elevated"]; bd=c["border"]; fg=c["text"]
             row=ctk.CTkFrame(self.ph_scroll, fg_color=bg, corner_radius=8, border_width=1, border_color=bd)
             row.pack(fill="x", pady=2)
             pref="✓" if mapped else "○"
@@ -162,11 +165,12 @@ class MapeamentoView(ctk.CTkFrame):
             return
         for doc in self.state.documentos_anexados:
             sel=doc['caminho']==self.state.documento_atual_path
-            bg=c["success"] if sel else "transparent"
-            row=ctk.CTkFrame(self.doc_scroll, fg_color=bg, corner_radius=8)
+            bg=c["success_soft"] if sel else c["surface_elevated"]
+            bd=c["success"] if sel else c["border"]
+            row=ctk.CTkFrame(self.doc_scroll, fg_color=bg, corner_radius=8, border_width=1, border_color=bd)
             row.pack(fill="x", pady=2)
             icon="📄" if doc['tipo']=="pdf" else "🖼️"
-            lbl=ctk.CTkLabel(row, text=f"{icon}  {doc['nome']}", font=FONTS["body_small"], text_color=c["surface"] if sel else c["text"], anchor="w")
+            lbl=ctk.CTkLabel(row, text=f"{icon}  {doc['nome']}", font=FONTS["body_small"], text_color=c["success"] if sel else c["text"], anchor="w")
             lbl.pack(side="left", padx=10, pady=6)
             lbl.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
             row.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
@@ -294,7 +298,7 @@ class MapeamentoView(ctk.CTkFrame):
             ctk.CTkLabel(self.map_scroll, text="Nenhum mapeamento ainda", font=FONTS["caption"], text_color=c["text_muted"]).pack(pady=6)
             return
         for ph, dados in self.state.mapeamento.items():
-            row=ctk.CTkFrame(self.map_scroll, fg_color=c["success_soft"], corner_radius=8)
+            row=ctk.CTkFrame(self.map_scroll, fg_color=c["surface_elevated"], corner_radius=8, border_width=1, border_color=c["border"])
             row.pack(fill="x", pady=2, padx=2)
             ctk.CTkLabel(row, text=f"✓ {ph}", font=FONTS["body_small"], text_color=c["success"], width=160, anchor="w").pack(side="left", padx=8, pady=4)
             ctk.CTkLabel(row, text=f"→ {os.path.basename(dados['documento_path'])}", font=FONTS["caption"], text_color=c["text_muted"]).pack(side="left")

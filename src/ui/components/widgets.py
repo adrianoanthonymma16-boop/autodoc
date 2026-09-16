@@ -6,12 +6,13 @@ from ui.theme import get_colors, FONTS
 
 def card(parent, **kwargs):
     c = get_colors()
-    return ctk.CTkFrame(parent, fg_color=c["surface"], corner_radius=16,
+    return ctk.CTkFrame(parent, fg_color=c["surface_elevated"], corner_radius=16,
                         border_width=1, border_color=c["border"], **kwargs)
 
 def section_header(parent, title, subtitle=None, icon=""):
     c = get_colors()
     f = ctk.CTkFrame(parent, fg_color="transparent")
+    # Use icon color for the icon
     txt = f"{icon}  {title}" if icon else title
     ctk.CTkLabel(f, text=txt, font=FONTS["h1"], text_color=c["text"]).pack(anchor="w")
     if subtitle:
@@ -41,7 +42,7 @@ def pill(parent, text, kind="primary"):
 def empty_state(parent, icon, title, subtitle, button_text=None, button_cmd=None):
     c = get_colors()
     f = ctk.CTkFrame(parent, fg_color="transparent")
-    ctk.CTkLabel(f, text=icon, font=("Inter", 42)).pack(pady=(20,5))
+    ctk.CTkLabel(f, text=icon, font=("Inter", 42), text_color=c["icon"]).pack(pady=(20,5))
     ctk.CTkLabel(f, text=title, font=FONTS["h2"], text_color=c["text"]).pack()
     ctk.CTkLabel(f, text=subtitle, font=FONTS["body_small"], text_color=c["text_muted"], wraplength=420, justify="center").pack(pady=(4,12))
     if button_text and button_cmd:
