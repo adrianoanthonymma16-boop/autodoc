@@ -2,10 +2,9 @@
 MapeamentoService - lógica de mapeamento, undo/redo, import/export, backup atômico
 Corrige bugs: undo invertido, desync lote_fontes, pan offset, etc.
 """
+import copy
 import json
 import os
-import copy
-from typing import Dict, List
 
 from config import BACKUP_FILE
 
@@ -51,7 +50,7 @@ class MapeamentoService:
         if placeholder not in self.state.mapeamento:
             return
         old = copy.deepcopy(self.state.mapeamento[placeholder])
-        doc_path = old['documento_path']
+        old['documento_path']
         self.state.undo_stack.append({
             'action': 'remove',
             'placeholder': placeholder,
@@ -89,7 +88,7 @@ class MapeamentoService:
             old = copy.deepcopy(self.state.mapeamento.get(ph, {}))
             self.state.redo_stack.append({'action': 'add', 'placeholder': ph, 'old_data': old})
             if ph in self.state.mapeamento:
-                doc_path = self.state.mapeamento[ph]['documento_path']
+                self.state.mapeamento[ph]['documento_path']
                 del self.state.mapeamento[ph]
                 # remove do lote também
                 for entry in list(self.state.lote_fontes):
@@ -169,7 +168,7 @@ class MapeamentoService:
             json.dump(export, f, indent=2, ensure_ascii=False)
 
     def importar(self, caminho: str, forcar: bool = False):
-        with open(caminho, 'r', encoding='utf-8') as f:
+        with open(caminho, encoding='utf-8') as f:
             data = json.load(f)
         if data.get('modelo_path') != self.state.modelo_path and not forcar:
             # caller deve confirmar
@@ -216,7 +215,7 @@ class MapeamentoService:
         if not os.path.exists(BACKUP_FILE):
             return None
         try:
-            with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+            with open(BACKUP_FILE, encoding='utf-8') as f:
                 backup = json.load(f)
             if not backup.get('mapeamento'):
                 return None

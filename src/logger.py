@@ -5,7 +5,6 @@ Registra erros, ações e debug em arquivo
 
 import logging
 import os
-from datetime import datetime
 
 LOGGER = None
 

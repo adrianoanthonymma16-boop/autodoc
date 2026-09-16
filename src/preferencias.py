@@ -2,8 +2,8 @@
 Gerencia preferências do usuário salvas em JSON
 """
 
-import os
 import json
+import os
 
 PREFS_PATH = os.path.expanduser("~/.autodoc/prefs.json")
 
@@ -23,12 +23,12 @@ def carregar_preferencias():
         return dict(DEFAULTS)
 
     try:
-        with open(PREFS_PATH, "r", encoding="utf-8") as f:
+        with open(PREFS_PATH, encoding="utf-8") as f:
             data = json.load(f)
         prefs = dict(DEFAULTS)
         prefs.update(data)
         return prefs
-    except (json.JSONDecodeError, IOError):
+    except (OSError, json.JSONDecodeError):
         return dict(DEFAULTS)
 
 

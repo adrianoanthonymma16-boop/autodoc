@@ -1,9 +1,9 @@
 """
 GeracaoService - gera documentos finais
 """
-import os
+from modelo_docx import docx_suportado, gerar_docx_preenchido
 from modelo_odt import gerar_odt_preenchido
-from modelo_docx import gerar_docx_preenchido, docx_suportado
+
 
 class GeracaoService:
     def __init__(self, state):

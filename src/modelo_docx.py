@@ -4,7 +4,6 @@ Preserva runs/formatação e detecta placeholders quebrados entre runs
 """
 
 import re
-import os
 
 try:
     from docx import Document

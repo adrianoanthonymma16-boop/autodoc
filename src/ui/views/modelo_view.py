@@ -2,12 +2,14 @@
 ModeloView - aba Modelo com drag&drop, KPIs, lista de modelos carregados
 """
 import os
-import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from ui.theme import get_colors, FONTS
-from ui.components.widgets import card, section_header, kpi_card, empty_state, pill
+
+import customtkinter as ctk
+
+from ui.components.widgets import card, empty_state, kpi_card, pill, section_header
+from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_modelo
-from config import VERSAO
+
 
 class ModeloView(ctk.CTkFrame):
     def __init__(self, parent, state, modelo_service, **kwargs):
@@ -78,7 +80,7 @@ class ModeloView(ctk.CTkFrame):
             self._refresh()
 
     def _refresh(self):
-        c = get_colors()
+        get_colors()
         n_modelos = len(self.state.modelos) if self.state.modelos else (1 if self.state.modelo_path else 0)
         n_ph = len(self.state.placeholders)
         n_map = len(self.state.mapeamento)
@@ -116,13 +118,10 @@ class ModeloView(ctk.CTkFrame):
             return
         # grid de chips
         row = None
-        col = 0
-        max_cols = 3
         for ph in self.state.placeholders:
             if filtro and filtro not in ph.lower():
                 continue
             mapped = ph in self.state.mapeamento
-            kind = "success" if mapped else "neutral"
             prefix = "✓" if mapped else "○"
             row = ctk.CTkFrame(self.ph_scroll, fg_color=c["surface_hover"] if not mapped else c["success_soft"], corner_radius=10, border_width=1, border_color=c["success"] if mapped else c["border"])
             row.pack(fill="x", pady=3, padx=4)
@@ -181,9 +180,9 @@ class ModeloView(ctk.CTkFrame):
         if not self.state.modelo_path:
             messagebox.showwarning("Aviso", "Carregue um modelo primeiro!")
             return
+        from mensagens import mostrar_modelo_ja_salvo, mostrar_modelo_salvo_sucesso
         from modelos_salvos import salvar_modelo
-        from mensagens import mostrar_modelo_salvo_sucesso, mostrar_modelo_ja_salvo
-        ok, msg = salvar_modelo(self.state.modelo_path, self.state.modelo_tipo, self.state.placeholders)
+        ok, _msg = salvar_modelo(self.state.modelo_path, self.state.modelo_tipo, self.state.placeholders)
         if ok:
             mostrar_modelo_salvo_sucesso(os.path.basename(self.state.modelo_path))
         else:

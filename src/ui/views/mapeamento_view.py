@@ -2,13 +2,15 @@
 MapeamentoView - placeholder list + documento list + canvas moderno
 """
 import os
-import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from PIL import Image
-from ui.theme import get_colors, FONTS
-from ui.components.widgets import card, section_header, pill
+
+import customtkinter as ctk
+
 from ui.canvas.image_canvas import ImageCanvas
+from ui.components.widgets import card, section_header
+from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_anexo
+
 
 class MapeamentoView(ctk.CTkFrame):
     def __init__(self, parent, state, doc_service, map_service, **kwargs):
@@ -213,8 +215,8 @@ class MapeamentoView(ctk.CTkFrame):
         if not self.state.placeholders:
             messagebox.showwarning("Aviso","Carregue um modelo primeiro")
             return
-        from mensagens import mostrar_info_anexos
         from anexo_heic import heic_suportado
+        from mensagens import mostrar_info_anexos
         if not mostrar_info_anexos(heic_suportado()):
             return
         from preferencias import carregar_preferencias, set_preferencia
@@ -282,7 +284,7 @@ class MapeamentoView(ctk.CTkFrame):
         if not caminho: return
         import json
         try:
-            with open(caminho,'r', encoding='utf-8') as f: data=json.load(f)
+            with open(caminho, encoding='utf-8') as f: data=json.load(f)
             if data.get('modelo_path')!=self.state.modelo_path:
                 if not messagebox.askyesno("Modelo diferente","Mapeamento de outro modelo. Continuar?"):
                     return

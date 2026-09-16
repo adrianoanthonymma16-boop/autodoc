@@ -2,10 +2,13 @@
 DocumentoService - carrega anexos (imagem, pdf, heic)
 """
 import os
+
 from PIL import Image
-from validadores import validar_extensao
-from anexo_pdf import pdf_para_imagem
+
 from anexo_heic import heic_para_imagem
+from anexo_pdf import pdf_para_imagem
+from validadores import validar_extensao
+
 
 class DocumentoService:
     def __init__(self, state):

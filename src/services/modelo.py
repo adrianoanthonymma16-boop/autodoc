@@ -1,18 +1,17 @@
 """
 ModeloService - centraliza carregamento/validação de modelos
 """
-import os
-from typing import List, Tuple
 
-from validadores import validar_extensao
+from modelo_docx import docx_suportado, extrair_placeholders_docx
 from modelo_odt import extrair_placeholders_odt
-from modelo_docx import extrair_placeholders_docx, docx_suportado
+from validadores import validar_extensao
+
 
 class ModeloService:
     def __init__(self, state):
         self.state = state
 
-    def carregar_arquivo_unico(self, caminho: str) -> Tuple[bool, str]:
+    def carregar_arquivo_unico(self, caminho: str) -> tuple[bool, str]:
         valido, ext, msg = validar_extensao(caminho, 'modelo')
         if not valido:
             return False, msg
@@ -39,7 +38,7 @@ class ModeloService:
         except Exception as e:
             return False, str(e)
 
-    def adicionar_ao_lote(self, caminho: str) -> Tuple[bool, str]:
+    def adicionar_ao_lote(self, caminho: str) -> tuple[bool, str]:
         valido, ext, msg = validar_extensao(caminho, 'modelo')
         if not valido:
             return False, msg
@@ -96,7 +95,7 @@ class ModeloService:
             self.state.notify('modelo')
             self.state.notify('modelos')
 
-    def usar_da_biblioteca(self, caminho: str, tipo: str, placeholders: List[str]):
+    def usar_da_biblioteca(self, caminho: str, tipo: str, placeholders: list[str]):
         self.state.modelo_path = caminho
         self.state.modelo_tipo = tipo
         self.state.placeholders = placeholders

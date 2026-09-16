@@ -2,8 +2,8 @@
 Módulo para converter PDF em imagem (primeira página)
 """
 
+import contextlib
 import os
-from PIL import Image
 
 # Tenta importar pypdfium2
 try:
@@ -16,22 +16,22 @@ except ImportError:
 def pdf_para_imagem(caminho_pdf):
     """
     Converte a primeira página de um PDF para imagem PIL
-    
+
     Args:
         caminho_pdf (str): Caminho do arquivo PDF
-    
+
     Returns:
         PIL.Image: Primeira página como imagem
-    
+
     Raises:
         Exception: Se pypdfium2 não estiver instalado ou PDF inválido
     """
     if not PDF_SUPORTADO:
         raise Exception("Suporte a PDF não disponível. Instale: pip install pypdfium2")
-    
+
     if not os.path.exists(caminho_pdf):
         raise Exception(f"Arquivo não encontrado: {caminho_pdf}")
-    
+
     # Abre o PDF (garante fechamento mesmo em erro)
     pdf = pdfium.PdfDocument(caminho_pdf)
     try:
@@ -44,10 +44,8 @@ def pdf_para_imagem(caminho_pdf):
         imagem = bitmap.to_pil()
         return imagem
     finally:
-        try:
+        with contextlib.suppress(Exception):
             pdf.close()
-        except Exception:
-            pass
 
 
 def pdf_suportado():

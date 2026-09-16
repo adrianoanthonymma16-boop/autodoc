@@ -37,7 +37,7 @@ def validar_data(data_str):
         try:
             dt = datetime.strptime(data_str, fmt)
             if dt.year < 1900 or dt.year > 2100:
-                return False, f"Ano fora do intervalo (1900-2100)"
+                return False, "Ano fora do intervalo (1900-2100)"
             return True, desc
         except ValueError:
             continue

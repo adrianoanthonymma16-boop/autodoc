@@ -3,8 +3,8 @@ Módulo de persistência de modelos salvos
 Gerencia o armazenamento, listagem, carregamento e remoção de templates
 """
 
-import os
 import json
+import os
 import shutil
 import uuid
 from datetime import datetime
@@ -16,10 +16,10 @@ def _carregar_registros():
     if not os.path.exists(REGISTRO_MODELOS):
         return []
     try:
-        with open(REGISTRO_MODELOS, 'r', encoding='utf-8') as f:
+        with open(REGISTRO_MODELOS, encoding='utf-8') as f:
             dados = json.load(f)
             return dados.get('modelos', [])
-    except (json.JSONDecodeError, IOError):
+    except (OSError, json.JSONDecodeError):
         return []
 
 

@@ -1,0 +1,68 @@
+[project]
+name = "autodoc-ctk"
+version = "4.0.0"
+description = "AutoDoc - Gerador automático de documentos com OCR"
+requires-python = ">=3.10"
+license = "MIT"
+readme = "README.md"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # function call in default argument (customtkinter pattern)
+    "N802",   # function name should be lowercase (Portuguese names)
+    "N803",   # argument name should be lowercase
+    "N806",   # variable in function should be lowercase
+    "UP007",  # use X | Y for union types (not yet)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/interface_ctk.py" = ["E", "W", "F", "N"]  # legacy monolith
+"src/interface.py" = ["E", "W", "F", "N"]       # legacy monolith
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gui: marks tests that require a display (deselect with '-m \"not gui\"')",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = false  # gradual adoption
+
+[[tool.mypy.overrides]]
+module = [
+    "customtkinter.*",
+    "ttkbootstrap.*",
+    "cv2.*",
+    "pytesseract.*",
+    "pypdfium2.*",
+    "PIL.*",
+    "odf.*",
+]
+ignore_missing_imports = true

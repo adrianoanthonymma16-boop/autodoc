@@ -1,10 +1,14 @@
 """
 ImageCanvas - corrige bugs de pan/zoom e coords, cross-platform
 """
+import contextlib
 import tkinter as tk
-from PIL import Image, ImageTk
+
 import customtkinter as ctk
+from PIL import Image, ImageTk
+
 from ui.theme import get_colors
+
 
 class ImageCanvas(ctk.CTkFrame):
     def __init__(self, parent, on_rect_done=None, **kwargs):
@@ -86,10 +90,8 @@ class ImageCanvas(ctk.CTkFrame):
         self.canvas.create_image(self.pan_x, self.pan_y, anchor=tk.NW, image=self.imagem_tk)
         # redesenha overlays capturados externamente via callback
         for fn in self._overlays:
-            try:
+            with contextlib.suppress(Exception):
                 fn(self)
-            except Exception:
-                pass
         self.lbl_zoom.configure(text=f"{int(self.zoom*100)}%")
 
     def set_overlays(self, fns):

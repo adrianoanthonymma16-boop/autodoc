@@ -2,15 +2,18 @@
 GerarView - preview + edição + geração com threading OCR
 """
 import os
-import customtkinter as ctk
-from tkinter import filedialog, messagebox
 import tkinter as tk
-from ui.theme import get_colors, FONTS
-from ui.components.widgets import card, section_header
-from validadores_extra import sugerir_validacao, validar_campo
-from preferencias import carregar_preferencias, set_preferencia
-from logger import log_info, log_erro
+from tkinter import filedialog, messagebox
+
+import customtkinter as ctk
+
 from historico import adicionar_ao_historico
+from logger import log_erro, log_info
+from preferencias import carregar_preferencias, set_preferencia
+from ui.components.widgets import card, section_header
+from ui.theme import FONTS, get_colors
+from validadores_extra import sugerir_validacao, validar_campo
+
 
 class GerarView(ctk.CTkFrame):
     def __init__(self, parent, state, extracao_service, geracao_service, **kwargs):
@@ -134,9 +137,8 @@ class GerarView(ctk.CTkFrame):
                 if txt:
                     ok,msg=validar_campo(ph, txt)
                     if not ok: erros.append(f"{ph}: {msg}")
-            if erros:
-                if messagebox.askyesno("Validação", "Erros:\n"+"\n".join(erros)+"\n\nCorrigir?"):
-                    return
+            if erros and messagebox.askyesno("Validação", "Erros:\n"+"\n".join(erros)+"\n\nCorrigir?"):
+                return
             self.state.dados_extraidos=novos
             win.destroy()
             self.text.delete("1.0", tk.END)

@@ -2,17 +2,17 @@
 Pop-ups informativos para o usuário
 """
 
-import tkinter as tk
 from tkinter import messagebox
-from config import MODELO_EXTENSOES, ANEXO_EXTENSOES
+
+from config import ANEXO_EXTENSOES, MODELO_EXTENSOES
 
 
 def mostrar_info_modelos():
     """Pop-up informativo sobre formatos de modelo"""
-    
+
     # Monta a lista de formatos
     formatos = "\n".join([f"✅ {ext.upper()} → {nome}" for ext, nome in MODELO_EXTENSOES.items()])
-    
+
     msg = f"""📄 FORMATOS ACEITOS PARA O MODELO:
 
 {formatos}
@@ -30,22 +30,22 @@ Exemplo:
 
 ─────────────────────────────
 Deseja continuar?"""
-    
+
     return messagebox.askyesno("Formatos Suportados - Modelo", msg)
 
 
 def mostrar_info_anexos(heic_disponivel=False):
     """Pop-up informativo sobre formatos de anexos"""
-    
+
     formatos = []
     for ext, nome in ANEXO_EXTENSOES.items():
         if ext == '.heic' and not heic_disponivel:
             formatos.append(f"⚠️ {ext.upper()} → NÃO DISPONÍVEL (instale libheif e pyheif)")
         else:
             formatos.append(f"✅ {ext.upper()} → {nome}")
-    
+
     lista_formatos = "\n".join(formatos)
-    
+
     msg = f"""📷 FORMATOS ACEITOS PARA ANEXOS:
 
 {lista_formatos}
@@ -61,7 +61,7 @@ Dica para melhor resultado no OCR:
 
 ─────────────────────────────
 Deseja continuar?"""
-    
+
     return messagebox.askyesno("Formatos Suportados - Anexos", msg)
 
 
@@ -73,7 +73,7 @@ def mostrar_erro_formato(ext, tipo='modelo'):
     else:
         suportados = ", ".join(ANEXO_EXTENSOES.keys())
         msg = f"Formato {ext} não é suportado.\n\nUse: {suportados}"
-    
+
     messagebox.showerror("Formato não suportado", msg)
 
 

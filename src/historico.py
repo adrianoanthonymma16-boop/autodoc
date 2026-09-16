@@ -2,9 +2,10 @@
 Histórico de documentos gerados
 """
 
-import os
 import json
+import os
 from datetime import datetime
+
 from config import PASTA_APP
 
 HISTORY_PATH = os.path.join(PASTA_APP, "historico.json")
@@ -16,9 +17,9 @@ def carregar_historico():
         return []
 
     try:
-        with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+        with open(HISTORY_PATH, encoding="utf-8") as f:
             return json.load(f)
-    except (json.JSONDecodeError, IOError):
+    except (OSError, json.JSONDecodeError):
         return []
 
 

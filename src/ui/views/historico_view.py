@@ -2,10 +2,13 @@
 HistoricoView - listagem premium
 """
 import os
+
 import customtkinter as ctk
-from ui.theme import get_colors, FONTS
-from ui.components.widgets import card, section_header, empty_state
+
 from historico import listar_historico
+from ui.components.widgets import card, empty_state, section_header
+from ui.theme import FONTS, get_colors
+
 
 class HistoricoView(ctk.CTkFrame):
     def __init__(self, parent, **kwargs):

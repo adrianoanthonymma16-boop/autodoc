@@ -2,10 +2,13 @@
 ExtracaoService - OCR em thread para não congelar UI
 """
 import threading
+
 from PIL import Image
-from ocr import extrair_texto_do_recorte
-from anexo_pdf import pdf_para_imagem
+
 from anexo_heic import heic_para_imagem
+from anexo_pdf import pdf_para_imagem
+from ocr import extrair_texto_do_recorte
+
 
 class ExtracaoService:
     def __init__(self, state):

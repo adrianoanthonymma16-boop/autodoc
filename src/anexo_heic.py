@@ -3,6 +3,7 @@ Módulo para converter HEIC (fotos iPhone) em imagem PIL
 """
 
 import os
+
 from PIL import Image
 
 # Tenta importar pyheif
@@ -16,25 +17,25 @@ except ImportError:
 def heic_para_imagem(caminho_heic):
     """
     Converte arquivo HEIC para imagem PIL
-    
+
     Args:
         caminho_heic (str): Caminho do arquivo HEIC
-    
+
     Returns:
         PIL.Image: Imagem convertida
-    
+
     Raises:
         Exception: Se pyheif não estiver instalado
     """
     if not HEIC_SUPORTADO:
         raise Exception("Suporte a HEIC não disponível. Instale: sudo apt install libheif-dev && pip install pyheif")
-    
+
     if not os.path.exists(caminho_heic):
         raise Exception(f"Arquivo não encontrado: {caminho_heic}")
-    
+
     # Lê o arquivo HEIC
     heif_file = pyheif.read(caminho_heic)
-    
+
     # Converte para PIL Image
     imagem = Image.frombytes(
         heif_file.mode,
@@ -44,7 +45,7 @@ def heic_para_imagem(caminho_heic):
         heif_file.mode,
         heif_file.stride
     ).copy()
-    
+
     return imagem.convert("RGB") if imagem.mode != "RGB" else imagem
 
 

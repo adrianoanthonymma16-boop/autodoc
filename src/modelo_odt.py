@@ -2,12 +2,12 @@
 Módulo para ler e escrever arquivos ODT (LibreOffice) - corrigido
 """
 
+import os
 import re
-import zipfile
-import xml.etree.ElementTree as ET
 import shutil
 import tempfile
-import os
+import xml.etree.ElementTree as ET
+import zipfile
 
 
 def _texto_completo_odt(root):
@@ -70,7 +70,7 @@ def gerar_odt_preenchido(caminho_modelo, dados, caminho_saida):
             odt_in.extractall(tmpdir)
 
         content_path = os.path.join(tmpdir, 'content.xml')
-        with open(content_path, 'r', encoding='utf-8') as f:
+        with open(content_path, encoding='utf-8') as f:
             content = f.read()
 
         for placeholder, valor in dados.items():
@@ -89,7 +89,7 @@ def gerar_odt_preenchido(caminho_modelo, dados, caminho_saida):
             mimetype_path = os.path.join(tmpdir, 'mimetype')
             if os.path.exists(mimetype_path):
                 odt_out.write(mimetype_path, 'mimetype', compress_type=zipfile.ZIP_STORED)
-            for root_dir, dirs, files in os.walk(tmpdir):
+            for root_dir, _dirs, files in os.walk(tmpdir):
                 for file in files:
                     file_path = os.path.join(root_dir, file)
                     arcname = os.path.relpath(file_path, tmpdir)

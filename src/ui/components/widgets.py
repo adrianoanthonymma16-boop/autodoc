@@ -2,7 +2,9 @@
 Widgets reutilizáveis premium
 """
 import customtkinter as ctk
-from ui.theme import get_colors, FONTS
+
+from ui.theme import FONTS, get_colors
+
 
 def card(parent, **kwargs):
     c = get_colors()

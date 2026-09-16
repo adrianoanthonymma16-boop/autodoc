@@ -1,27 +1,25 @@
 """
 Shell - janela principal com sidebar responsiva
 """
-import os
+import contextlib
+
 import customtkinter as ctk
-from ui.theme import get_colors, FONTS
-from config import VERSAO
+
+from config import BACKUP_INTERVAL, VERSAO
 from core.state import AppState
-from services.modelo import ModeloService
+from logger import log_info
+from preferencias import carregar_preferencias, set_preferencia
 from services.documento import DocumentoService
-from services.mapeamento import MapeamentoService
 from services.extracao import ExtracaoService
 from services.geracao import GeracaoService
-from preferencias import carregar_preferencias, set_preferencia
-from logger import log_info
-from config import BACKUP_INTERVAL, BACKUP_FILE
-import json
-
-from ui.views.modelo_view import ModeloView
+from services.mapeamento import MapeamentoService
+from services.modelo import ModeloService
+from ui.theme import get_colors
 from ui.views.biblioteca_view import BibliotecaView
-from ui.views.mapeamento_view import MapeamentoView
 from ui.views.gerar_view import GerarView
 from ui.views.historico_view import HistoricoView
-
+from ui.views.mapeamento_view import MapeamentoView
+from ui.views.modelo_view import ModeloView
 
 NAV_ITEMS = [
     ("Modelos", "📄", "modelos"),
@@ -243,8 +241,7 @@ class Shell:
             self.btn_theme.configure(text="☀  Modo claro")
         geo=prefs.get('tamanho_janela_ctk')
         if geo:
-            try: self.root.geometry(geo)
-            except: pass
+            with contextlib.suppress(BaseException): self.root.geometry(geo)
 
     def _try_restore_backup(self):
         data=self.map_svc.restaurar_backup()
