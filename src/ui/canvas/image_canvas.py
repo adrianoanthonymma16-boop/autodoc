@@ -5,6 +5,7 @@ import contextlib
 import tkinter as tk
 
 import customtkinter as ctk
+from customtkinter.windows.widgets.scaling.scaling_tracker import ScalingTracker
 from PIL import Image, ImageTk
 
 from ui.theme import get_colors
@@ -80,8 +81,9 @@ class ImageCanvas(ctk.CTkFrame):
         if not self.imagem_original:
             self.canvas.delete("all")
             return
-        w = int(self.imagem_original.width * self.zoom)
-        h = int(self.imagem_original.height * self.zoom)
+        scale = ScalingTracker.get_window_scaling(self) or 1.0
+        w = int(self.imagem_original.width * self.zoom * scale)
+        h = int(self.imagem_original.height * self.zoom * scale)
         w = max(1, w); h = max(1, h)
         self.imagem_resized = self.imagem_original.resize((w, h), Image.Resampling.LANCZOS)
         self.imagem_tk = ImageTk.PhotoImage(self.imagem_resized)
