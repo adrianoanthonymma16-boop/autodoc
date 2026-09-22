@@ -8,6 +8,7 @@ import customtkinter as ctk
 from customtkinter.windows.widgets.scaling.scaling_tracker import ScalingTracker
 from PIL import Image, ImageTk
 
+from ui.icons import get as get_icon
 from ui.theme import get_colors
 
 
@@ -42,8 +43,8 @@ class ImageCanvas(ctk.CTkFrame):
         self.toolbar.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6,0))
         self.lbl_zoom = ctk.CTkLabel(self.toolbar, text="100%", font=("Inter", 10), text_color=c["text_muted"])
         self.lbl_zoom.pack(side="right", padx=6)
-        ctk.CTkButton(self.toolbar, text="－", width=28, height=24, corner_radius=8, command=lambda: self.zoom_by(0.8), fg_color=c["surface"], text_color=c["text"], border_width=1, border_color=c["border"]).pack(side="right", padx=2)
-        ctk.CTkButton(self.toolbar, text="＋", width=28, height=24, corner_radius=8, command=lambda: self.zoom_by(1.25), fg_color=c["surface"], text_color=c["text"], border_width=1, border_color=c["border"]).pack(side="right", padx=2)
+        ctk.CTkButton(self.toolbar, text="", image=get_icon("minus", 14, c["text"]), width=28, height=24, corner_radius=8, command=lambda: self.zoom_by(0.8), fg_color=c["surface"], border_width=1, border_color=c["border"]).pack(side="right", padx=2)
+        ctk.CTkButton(self.toolbar, text="", image=get_icon("plus", 14, c["text"]), width=28, height=24, corner_radius=8, command=lambda: self.zoom_by(1.25), fg_color=c["surface"], border_width=1, border_color=c["border"]).pack(side="right", padx=2)
         ctk.CTkButton(self.toolbar, text="100%", width=44, height=24, corner_radius=8, command=self.reset_view, fg_color=c["surface"], text_color=c["text"], border_width=1, border_color=c["border"]).pack(side="right", padx=2)
 
         self._bind_events()
