@@ -11,13 +11,13 @@ def mostrar_info_modelos():
     """Pop-up informativo sobre formatos de modelo"""
 
     # Monta a lista de formatos
-    formatos = "\n".join([f"✅ {ext.upper()} → {nome}" for ext, nome in MODELO_EXTENSOES.items()])
+    formatos = "\n".join([f"  • {ext.upper()} → {nome}" for ext, nome in MODELO_EXTENSOES.items()])
 
-    msg = f"""📄 FORMATOS ACEITOS PARA O MODELO:
+    msg = f"""FORMATOS ACEITOS PARA O MODELO:
 
 {formatos}
 
-❌ Outros formatos (TXT, PDF, etc.) NÃO são suportados
+Outros formatos (TXT, PDF, etc.) NÃO são suportados
 
 ─────────────────────────────
 
@@ -40,17 +40,17 @@ def mostrar_info_anexos(heic_disponivel=False):
     formatos = []
     for ext, nome in ANEXO_EXTENSOES.items():
         if ext == '.heic' and not heic_disponivel:
-            formatos.append(f"⚠️ {ext.upper()} → NÃO DISPONÍVEL (instale libheif e pyheif)")
+            formatos.append(f"  ! {ext.upper()} → NÃO DISPONÍVEL (instale libheif e pyheif)")
         else:
-            formatos.append(f"✅ {ext.upper()} → {nome}")
+            formatos.append(f"  • {ext.upper()} → {nome}")
 
     lista_formatos = "\n".join(formatos)
 
-    msg = f"""📷 FORMATOS ACEITOS PARA ANEXOS:
+    msg = f"""FORMATOS ACEITOS PARA ANEXOS:
 
 {lista_formatos}
 
-❌ BMP, GIF, Outros → NÃO são suportados
+BMP, GIF, outros → NÃO suportados
 
 ─────────────────────────────
 
@@ -94,7 +94,7 @@ def mostrar_sucesso_geracao(caminho):
 
 
 def mostrar_info_modelos_salvos():
-    msg = """📁 BIBLIOTECA DE MODELOS
+    msg = """BIBLIOTECA DE MODELOS
 
 Aqui ficam armazenados os modelos que você já usou.
 
