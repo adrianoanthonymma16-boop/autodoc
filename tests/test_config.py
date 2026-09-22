@@ -48,3 +48,44 @@ def test_themes_have_required_keys():
 
 def test_themes_are_different():
     assert LIGHT_THEME["canvas_bg"] != DARK_THEME["canvas_bg"]
+
+
+# --- atomicidade: falha na gravação não corrompe o arquivo original ---
+
+def test_historico_escrita_atomica(tmp_path, monkeypatch):
+    import historico
+    alvo = tmp_path / "historico.json"
+    monkeypatch.setattr(historico, "HISTORY_PATH", str(alvo))
+    historico.salvar_historico([{"a": 1}])
+    assert alvo.exists()
+
+    # força falha na escrita do alvo e verifica que o tmp não vazou
+    def boom(*args, **kw):
+        raise OSError("falha simulada")
+    monkeypatch.setattr("os.replace", boom)
+    import pytest
+    with pytest.raises(OSError):
+        historico.salvar_historico([{"a": 2}])
+    import json
+    with open(alvo, encoding="utf-8") as f:
+        assert json.load(f) == [{"a": 1}]  # conteúdo anterior intacto
+    assert not (tmp_path / "historico.json.tmp").exists()
+
+
+def test_preferencias_escrita_atomica(tmp_path, monkeypatch):
+    import preferencias
+    alvo = tmp_path / "prefs.json"
+    monkeypatch.setattr(preferencias, "PREFS_PATH", str(alvo))
+    preferencias.salvar_preferencias({"tema": "dark"})
+    assert alvo.exists()
+
+    def boom(*args, **kw):
+        raise OSError("falha simulada")
+    monkeypatch.setattr("os.replace", boom)
+    import pytest
+    with pytest.raises(OSError):
+        preferencias.salvar_preferencias({"tema": "light"})
+    import json
+    with open(alvo, encoding="utf-8") as f:
+        assert json.load(f) == {"tema": "dark"}  # intacto
+    assert not (tmp_path / "prefs.json.tmp").exists()

@@ -34,8 +34,14 @@ def carregar_preferencias():
 
 def salvar_preferencias(prefs):
     os.makedirs(os.path.dirname(PREFS_PATH), exist_ok=True)
-    with open(PREFS_PATH, "w", encoding="utf-8") as f:
-        json.dump(prefs, f, indent=2, ensure_ascii=False)
+    tmp = PREFS_PATH + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(prefs, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, PREFS_PATH)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def get_preferencia(chave):

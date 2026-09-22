@@ -25,8 +25,14 @@ def carregar_historico():
 
 def salvar_historico(historico):
     os.makedirs(os.path.dirname(HISTORY_PATH), exist_ok=True)
-    with open(HISTORY_PATH, "w", encoding="utf-8") as f:
-        json.dump(historico[-MAX_ENTRIES:], f, indent=2, ensure_ascii=False)
+    tmp = HISTORY_PATH + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(historico[-MAX_ENTRIES:], f, indent=2, ensure_ascii=False)
+        os.replace(tmp, HISTORY_PATH)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def adicionar_ao_historico(modelo_path, tipo_modelo, saida_path, num_campos):
