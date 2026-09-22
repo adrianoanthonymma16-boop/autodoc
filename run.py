@@ -31,7 +31,9 @@ def _start_nova():
     """Tenta a interface moderna. True se iniciou; False se indisponível."""
     try:
         import customtkinter as ctk
+        from ui.scaling import apply_hidpi_scaling
         from ui.shell import Shell
+        apply_hidpi_scaling()
         root = ctk.CTk()
         app = Shell(root)
         root.mainloop()

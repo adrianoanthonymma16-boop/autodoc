@@ -45,6 +45,8 @@ except Exception as e:
 if __name__ == "__main__":
     if NEW_SHELL:
         try:
+            from ui.scaling import apply_hidpi_scaling
+            apply_hidpi_scaling()
             root = ctk.CTk()
             app = Shell(root)
             root.mainloop()
@@ -72,6 +74,8 @@ if __name__ == "__main__":
             log_erro(f"Nova shell import falhou ({_fallback_error}), usando legada")
         except: pass
         from interface_ctk import AppDocumentosCTK
+        from ui.scaling import apply_hidpi_scaling
+        apply_hidpi_scaling()
         root = ctk.CTk()
         app = AppDocumentosCTK(root)
         root.mainloop()
