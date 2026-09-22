@@ -7,6 +7,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from ui.components.widgets import card, empty_state, kpi_card, pill, section_header
+from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_modelo
 
@@ -16,8 +17,17 @@ class ModeloView(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent", **kwargs)
         self.state = state
         self.svc = modelo_service
+        self._dirty = True
+        self._search_after = None
         self._build()
         self.state.subscribe(self._on_state)
+        self._refresh()
+        self._dirty = False
+
+    def mark_dirty(self):
+        self._dirty = True
+
+    def refresh_view(self):
         self._refresh()
 
     def _build(self):
@@ -25,18 +35,18 @@ class ModeloView(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
 
         # header
-        hdr = section_header(self, "Modelos", "Carregue seus templates ODT/DOCX com placeholders {{campo}}", icon="📄")
+        hdr = section_header(self, "Modelos", "Carregue seus templates ODT/DOCX com placeholders {{campo}}", icon="doc")
         hdr.pack(fill="x", padx=20, pady=(16,8))
 
-        # KPIs (badge Dabang)
+        # KPIs (badge Dabang, ícones SVG)
         kpi_row = ctk.CTkFrame(self, fg_color="transparent")
         kpi_row.pack(fill="x", padx=24, pady=8)
         kpi_row.grid_columnconfigure((0,1,2), weight=1)
-        self.kpi_modelos = kpi_card(kpi_row, "Modelos carregados", "0", "primary", icon="📄")
+        self.kpi_modelos = kpi_card(kpi_row, "Modelos carregados", "0", "primary", icon="doc")
         self.kpi_modelos.grid(row=0, column=0, sticky="ew", padx=6)
-        self.kpi_placeholders = kpi_card(kpi_row, "Placeholders únicos", "0", "accent", icon="◆")
+        self.kpi_placeholders = kpi_card(kpi_row, "Placeholders únicos", "0", "accent", icon="spark")
         self.kpi_placeholders.grid(row=0, column=1, sticky="ew", padx=6)
-        self.kpi_mapeados = kpi_card(kpi_row, "Mapeados", "0/0", "success", icon="✓")
+        self.kpi_mapeados = kpi_card(kpi_row, "Mapeados", "0/0", "success", icon="check")
         self.kpi_mapeados.grid(row=0, column=2, sticky="ew", padx=6)
 
         # Drop zone + botões
@@ -47,7 +57,7 @@ class ModeloView(ctk.CTkFrame):
         btn_row = ctk.CTkFrame(drop, fg_color="transparent")
         btn_row.pack(pady=14)
         ctk.CTkButton(btn_row, text="Carregar Modelo", command=self._carregar, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], height=40, font=FONTS["h3"]).pack(side="left", padx=6)
-        ctk.CTkButton(btn_row, text="＋ Adicionar ao lote", command=self._adicionar_lote, corner_radius=12, fg_color=c["surface_hover"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], hover_color=c["primary_soft"], height=40).pack(side="left", padx=6)
+        ctk.CTkButton(btn_row, text="Adicionar ao lote", image=get_icon("plus", 16, c["primary_hover"]), compound="left", command=self._adicionar_lote, corner_radius=12, fg_color=c["surface_hover"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], hover_color=c["primary_soft"], height=40).pack(side="left", padx=6)
         # drag drop bindings (tkdnd se disponível tenta)
         drop.bind("<Button-1>", lambda e: self._carregar())
 
@@ -58,7 +68,7 @@ class ModeloView(ctk.CTkFrame):
         # search
         self.search = ctk.CTkEntry(self.ph_card, placeholder_text="Buscar placeholder…", height=34, corner_radius=10, border_color=c["border"])
         self.search.pack(fill="x", padx=16, pady=(0,8))
-        self.search.bind("<KeyRelease>", lambda e: self._render_placeholders())
+        self.search.bind("<KeyRelease>", lambda e: self._on_search_key())
 
         self.ph_scroll = ctk.CTkScrollableFrame(self.ph_card, height=180, fg_color="transparent")
         self.ph_scroll.pack(fill="both", expand=True, padx=8, pady=(0,8))
@@ -71,13 +81,23 @@ class ModeloView(ctk.CTkFrame):
         # Ações de salvar
         self.save_row = ctk.CTkFrame(self, fg_color="transparent")
         self.save_row.pack(fill="x", padx=20, pady=(0,10))
-        ctk.CTkButton(self.save_row, text="💾 Salvar na Biblioteca", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], height=36).pack(side="left")
+        ctk.CTkButton(self.save_row, text="Salvar na Biblioteca", image=get_icon("save", 16, c["text_on_primary"]), compound="left", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], height=36).pack(side="left")
         self.lbl_status = ctk.CTkLabel(self.save_row, text="Nenhum modelo carregado", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_status.pack(side="left", padx=12)
+
+    def _on_search_key(self):
+        # debounce: evita rebuild total a cada tecla
+        if self._search_after is not None:
+            try:
+                self.after_cancel(self._search_after)
+            except Exception:
+                pass
+        self._search_after = self.after(200, self._render_placeholders)
 
     def _on_state(self, ev):
         if ev in ("modelo","modelos","mapeamento","backup"):
             self._refresh()
+            self._dirty = False
 
     def _refresh(self):
         get_colors()
@@ -101,7 +121,7 @@ class ModeloView(ctk.CTkFrame):
             w.destroy()
         filtro = self.search.get().strip().lower()
         if not self.state.placeholders:
-            empty_state(self.ph_scroll, "🔍", "Nenhum placeholder", "Carregue um modelo ODT/DOCX com {{campo}}.", button_text="Carregar Modelo", button_cmd=self._carregar).pack(pady=20)
+            empty_state(self.ph_scroll, "search", "Nenhum placeholder", "Carregue um modelo ODT/DOCX com {{campo}}.", button_text="Carregar Modelo", button_cmd=self._carregar).pack(pady=20)
             return
         # grid de chips
         row = None
@@ -133,7 +153,7 @@ class ModeloView(ctk.CTkFrame):
             ctk.CTkLabel(r, text=os.path.basename(m['path']), font=FONTS["body_small"], width=220, anchor="w").pack(side="left", padx=6)
             pill(r, m['tipo'].upper(), "primary").pack(side="left", padx=4)
             ctk.CTkLabel(r, text=", ".join(m['placeholders'])[:60], font=FONTS["caption"], text_color=c["text_muted"], width=260, anchor="w").pack(side="left", padx=6)
-            ctk.CTkButton(r, text="✕", width=28, height=24, corner_radius=8, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=lambda idx=i: self.svc.remover_do_lote(idx)).pack(side="right", padx=4)
+            ctk.CTkButton(r, text="", image=get_icon("x", 14, c["danger"]), width=28, height=24, corner_radius=8, fg_color=c["danger_soft"], hover_color=c["danger"], command=lambda idx=i: self.svc.remover_do_lote(idx)).pack(side="right", padx=4)
 
     def _carregar(self):
         from mensagens import mostrar_info_modelos
