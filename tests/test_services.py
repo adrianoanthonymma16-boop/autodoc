@@ -235,6 +235,27 @@ class TestMapeamentoServiceExtras:
         assert data is not None
         assert "PH1" in data["mapeamento"]
 
+    def test_sync_lote_remapear_remove_do_anterior(self, state):
+        svc = MapeamentoService(state)
+        svc.adicionar("PH1", "doc_a.pdf", "pdf", 0, 0, 10, 10)
+        # re-mapeia PH1 para doc_b: doc_a não pode ficar com o PH1 órfão
+        svc.adicionar("PH1", "doc_b.pdf", "pdf", 5, 5, 15, 15)
+        assert len(state.lote_fontes) == 2  # 2 documentos
+        for entry in state.lote_fontes:
+            if entry["documento_path"] == "doc_a.pdf":
+                assert "PH1" not in entry["mapeamento"]
+            else:
+                assert entry["mapeamento"]["PH1"] == {"x1": 5, "y1": 5, "x2": 15, "y2": 15}
+
+    def test_sync_lote_multiplos_placeholders_independentes(self, state):
+        svc = MapeamentoService(state)
+        svc.adicionar("PH1", "doc_a.pdf", "pdf", 0, 0, 10, 10)
+        svc.adicionar("PH2", "doc_a.pdf", "pdf", 1, 1, 11, 11)
+        assert len(state.lote_fontes) == 1
+        entry = state.lote_fontes[0]
+        assert set(entry["mapeamento"].keys()) == {"PH1", "PH2"}
+        assert entry["mapeamento"]["PH1"] == {"x1": 0, "y1": 0, "x2": 10, "y2": 10}
+
 
 # --- ExtracaoService: callbacks marshallizados (thread-safe Tk) ---
 

@@ -197,15 +197,12 @@ class MapeamentoView(ctk.CTkFrame):
     def _update_canvas(self):
         if not self.canvas.imagem_original:
             return
-        # desenha rects do mapeamento para este doc
+        # fonte única de verdade: state.mapeamento — o lote é um subproduto
+        # sincronizado via MapeamentoService._sync_lote
         rects=[]
         for ph, dados in self.state.mapeamento.items():
             if dados['documento_path']==self.state.documento_atual_path:
                 rects.append({'x1':dados['x1'],'y1':dados['y1'],'x2':dados['x2'],'y2':dados['y2'],'label':ph})
-        for entry in self.state.lote_fontes:
-            if entry['documento_path']==self.state.documento_atual_path:
-                for ph, dados in entry['mapeamento'].items():
-                    rects.append({'x1':dados['x1'],'y1':dados['y1'],'x2':dados['x2'],'y2':dados['y2'],'label':ph})
         def overlay(cv):
             cv.draw_rects(rects)
         self.canvas.set_overlays([overlay])

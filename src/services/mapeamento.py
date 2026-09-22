@@ -36,6 +36,10 @@ class MapeamentoService:
 
     def _sync_lote(self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2):
         mapping = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+        # um placeholder vive em exatamente um documento do lote: remove
+        # a entrada antiga dos demais docs antes de mover para o destino
+        for entry in self.state.lote_fontes:
+            entry['mapeamento'].pop(placeholder, None)
         for entry in self.state.lote_fontes:
             if entry['documento_path'] == doc_path:
                 entry['mapeamento'][placeholder] = mapping
