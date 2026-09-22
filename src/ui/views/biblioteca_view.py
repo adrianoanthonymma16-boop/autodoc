@@ -32,7 +32,7 @@ class BibliotecaView(ctk.CTkFrame):
         self.search.pack(side="left")
         self.search.bind("<KeyRelease>", lambda e: self._refresh())
         ctk.CTkButton(toolbar, text="↻ Atualizar", width=90, height=32, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["text"], border_width=1, border_color=c["border"], command=self._refresh).pack(side="left", padx=6)
-        ctk.CTkButton(toolbar, text="Usar modelo", width=120, height=34, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], command=self._usar).pack(side="right", padx=4)
+        ctk.CTkButton(toolbar, text="Usar modelo", width=120, height=34, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], command=self._usar).pack(side="right", padx=4)
         ctk.CTkButton(toolbar, text="Remover", width=90, height=34, corner_radius=10, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover).pack(side="right", padx=4)
 
         self.list_card = card(self)

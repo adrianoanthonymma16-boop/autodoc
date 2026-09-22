@@ -90,7 +90,7 @@ class Shell:
         # stepper progress minimal
         self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso", font=("Inter", 10, "bold"), text_color=c["text_faint"])
         self.step_label.pack(anchor="w", padx=16, pady=(16,4))
-        self.step_bar = ctk.CTkProgressBar(self.sidebar, height=6, corner_radius=3, progress_color=c["primary"], fg_color=c["sidebar_hover"])
+        self.step_bar = ctk.CTkProgressBar(self.sidebar, height=8, corner_radius=4, progress_color=c["primary"], fg_color=c["sidebar_hover"])
         self.step_bar.pack(fill="x", padx=16); self.step_bar.set(0)
 
         # bottom actions
@@ -138,9 +138,9 @@ class Shell:
         c = get_colors()
         for k, btn in self.nav_btns.items():
             if k==key:
-                btn.configure(fg_color=c["primary"], text_color=c["surface"])
+                btn.configure(fg_color=c["primary"], text_color=c["text_on_primary"], hover_color=c["primary_hover"])
             else:
-                btn.configure(fg_color="transparent", text_color=c["text_muted"])
+                btn.configure(fg_color="transparent", text_color=c["text_muted"], hover_color=c["sidebar_hover"])
         self.views[key].tkraise()
         self.current=key
         # refresh historico when entering

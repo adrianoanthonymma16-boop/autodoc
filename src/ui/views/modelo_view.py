@@ -46,8 +46,9 @@ class ModeloView(ctk.CTkFrame):
         ctk.CTkLabel(drop, text="ODT e DOCX • placeholders no formato {{nome_campo}}", font=FONTS["caption"], text_color=c["text_faint"]).pack()
         btn_row = ctk.CTkFrame(drop, fg_color="transparent")
         btn_row.pack(pady=12)
-        ctk.CTkButton(btn_row, text="Carregar Modelo", command=self._carregar, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], height=38, font=FONTS["h3"]).pack(side="left", padx=6)
-        ctk.CTkButton(btn_row, text="＋ Adicionar ao lote", command=self._adicionar_lote, corner_radius=10, fg_color=c["surface"], text_color=c["primary"], border_width=1, border_color=c["primary"], hover_color=c["primary_soft"], height=38).pack(side="left", padx=6)
+        # secondary button: surface_hover + primary_hover passes AA (5.0+)
+        ctk.CTkButton(btn_row, text="Carregar Modelo", command=self._carregar, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], height=38, font=FONTS["h3"]).pack(side="left", padx=6)
+        ctk.CTkButton(btn_row, text="＋ Adicionar ao lote", command=self._adicionar_lote, corner_radius=10, fg_color=c["surface_hover"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], hover_color=c["primary_soft"], height=38).pack(side="left", padx=6)
         # drag drop bindings (tkdnd se disponível tenta)
         drop.bind("<Button-1>", lambda e: self._carregar())
 
@@ -71,7 +72,7 @@ class ModeloView(ctk.CTkFrame):
         # Ações de salvar
         self.save_row = ctk.CTkFrame(self, fg_color="transparent")
         self.save_row.pack(fill="x", padx=20, pady=(0,10))
-        ctk.CTkButton(self.save_row, text="💾 Salvar na Biblioteca", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], height=36).pack(side="left")
+        ctk.CTkButton(self.save_row, text="💾 Salvar na Biblioteca", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], height=36).pack(side="left")
         self.lbl_status = ctk.CTkLabel(self.save_row, text="Nenhum modelo carregado", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_status.pack(side="left", padx=12)
 
@@ -112,7 +113,7 @@ class ModeloView(ctk.CTkFrame):
             prefix = "✓" if mapped else "○"
             row = ctk.CTkFrame(self.ph_scroll, fg_color=c["surface_hover"] if not mapped else c["success_soft"], corner_radius=10, border_width=1, border_color=c["success"] if mapped else c["border"])
             row.pack(fill="x", pady=3, padx=4)
-            ctk.CTkLabel(row, text=f"{prefix}  {{{{{ph}}}}}", font=FONTS["body_small"], text_color=c["success"] if mapped else c["text"]).pack(side="left", padx=10, pady=6)
+            ctk.CTkLabel(row, text=f"{prefix}  {{{{{ph}}}}}", font=FONTS["body_small"], text_color=c["success_hover"] if mapped else c["text"]).pack(side="left", padx=10, pady=6)
             pill(row, "mapeado" if mapped else "pendente", "success" if mapped else "neutral").pack(side="right", padx=8)
 
     def _render_lote(self):

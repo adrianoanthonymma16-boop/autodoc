@@ -26,7 +26,7 @@ def kpi_card(parent, label, value, accent="primary"):
     f = card(parent)
     color = c[accent] if accent in c else c["primary"]
     # top bar
-    bar = ctk.CTkFrame(f, height=3, fg_color=color, corner_radius=2)
+    bar = ctk.CTkFrame(f, height=4, fg_color=color, corner_radius=2)
     bar.pack(fill="x", padx=0, pady=0)
     value_label = ctk.CTkLabel(f, text=value, font=("Inter", 24, "bold"), text_color=c["text"])
     value_label.pack(anchor="w", padx=16, pady=(12,0))
@@ -37,7 +37,7 @@ def kpi_card(parent, label, value, accent="primary"):
 def pill(parent, text, kind="primary"):
     c = get_colors()
     map_kind = {"primary": c["primary_soft"], "success": c["success_soft"], "warning": c["warning_soft"], "danger": c["danger_soft"], "neutral": c["surface_hover"]}
-    txt_color = {"primary": c["primary"], "success": c["success"], "warning": c["warning"], "danger": c["danger"], "neutral": c["text_muted"]}
+    txt_color = {"primary": c["primary_hover"], "success": c["success_hover"], "warning": c["warning"], "danger": c["danger"], "neutral": c["text_muted"]}
     lbl = ctk.CTkLabel(parent, text=text, font=FONTS["caption"],
                        fg_color=map_kind.get(kind, c["surface_hover"]), corner_radius=20,
                        padx=10, pady=3, text_color=txt_color.get(kind, c["text"]))
@@ -50,7 +50,7 @@ def empty_state(parent, icon, title, subtitle, button_text=None, button_cmd=None
     ctk.CTkLabel(f, text=title, font=FONTS["h2"], text_color=c["text"]).pack()
     ctk.CTkLabel(f, text=subtitle, font=FONTS["body_small"], text_color=c["text_muted"], wraplength=420, justify="center").pack(pady=(4,12))
     if button_text and button_cmd:
-        ctk.CTkButton(f, text=button_text, command=button_cmd, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], height=36).pack()
+        ctk.CTkButton(f, text=button_text, command=button_cmd, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], height=36).pack()
     return f
 
 def progress_dots(parent, total, done):

@@ -132,7 +132,8 @@ class ImageCanvas(ctk.CTkFrame):
         x=self.canvas.canvasx(e.x)
         y=self.canvas.canvasy(e.y)
         self._start=(x,y)
-        self._rect_id=self.canvas.create_rectangle(x,y,x,y, outline="#2563EB", width=2, dash=(6,4))
+        c = get_colors()
+        self._rect_id=self.canvas.create_rectangle(x,y,x,y, outline=c["primary"], width=2, dash=(6,4))
 
     def _on_drag(self, e):
         if self._rect_id and self._start:
@@ -160,7 +161,7 @@ class ImageCanvas(ctk.CTkFrame):
             ry1=max(0, min(ry1, self.imagem_original.height))
             rx2=max(0, min(rx2, self.imagem_original.width))
             ry2=max(0, min(ry2, self.imagem_original.height))
-            self.canvas.itemconfig(self._rect_id, outline="#0EA5E9", dash=())
+            self.canvas.itemconfig(self._rect_id, outline=get_colors()["accent"], dash=())
             if self.on_rect_done:
                 self.on_rect_done(rx1, ry1, rx2, ry2)
         else:
@@ -168,10 +169,13 @@ class ImageCanvas(ctk.CTkFrame):
         self._rect_id=None
         self._start=None
 
-    def draw_rects(self, rects, color="#059669", label_color="#059669"):
+    def draw_rects(self, rects, color=None, label_color=None):
         """rects: list of dict x1,y1,x2,y2 + label"""
         if not self.imagem_original or not self.imagem_resized:
             return
+        c = get_colors()
+        color = color or c["primary"]
+        label_color = label_color or c["primary"]
         sx=self.imagem_resized.width/self.imagem_original.width
         sy=self.imagem_resized.height/self.imagem_original.height
         for r in rects:

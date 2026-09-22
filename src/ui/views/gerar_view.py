@@ -47,9 +47,9 @@ class GerarView(ctk.CTkFrame):
         # actions
         actions=ctk.CTkFrame(self, fg_color="transparent")
         actions.pack(fill="x", padx=20, pady=8)
-        ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=42, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=4)
-        ctk.CTkButton(actions, text="✏️  Preencher manual", height=42, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["primary"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=4)
-        ctk.CTkButton(actions, text="🚀  Gerar", height=42, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=4)
+        ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=42, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=4)
+        ctk.CTkButton(actions, text="✏️  Preencher manual", height=42, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=4)
+        ctk.CTkButton(actions, text="🚀  Gerar", height=42, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=4)
 
         self.status=ctk.CTkLabel(self, text="Dica: mapeie todos os campos para melhor resultado", font=FONTS["caption"], text_color=c["text_muted"])
         self.status.pack(fill="x", padx=20, pady=(0,10))
@@ -65,7 +65,7 @@ class GerarView(ctk.CTkFrame):
         if total==0:
             self.lbl_pronto.configure(text="Nenhum modelo")
         elif mapped==total:
-            self.lbl_pronto.configure(text=f"✅ Pronto para gerar  •  {mapped}/{total} mapeados", text_color=get_colors()["success"])
+            self.lbl_pronto.configure(text=f"✅ Pronto para gerar  •  {mapped}/{total} mapeados", text_color=get_colors()["success_hover"])
         elif mapped>0:
             self.lbl_pronto.configure(text=f"⚠️ {mapped}/{total} mapeados", text_color=get_colors()["warning"])
         else:

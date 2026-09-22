@@ -39,17 +39,17 @@ class MapeamentoView(ctk.CTkFrame):
         # Toolbar
         tb = ctk.CTkFrame(self, fg_color="transparent")
         tb.pack(fill="x", padx=20, pady=6)
-        ctk.CTkButton(tb, text="＋ Anexar", height=32, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], command=self._anexar).pack(side="left", padx=3)
+        ctk.CTkButton(tb, text="＋ Anexar", height=32, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=3)
         ctk.CTkButton(tb, text="Limpar mapeamento", height=32, corner_radius=10, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning"], command=self._limpar).pack(side="left", padx=3)
         ctk.CTkButton(tb, text="Remover doc", height=32, corner_radius=10, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover_doc).pack(side="left", padx=3)
         ctk.CTkButton(tb, text="↩ Desfazer", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=2)
-        ctk.CTkButton(tb, text="Exportar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary"], command=self._export).pack(side="right", padx=2)
-        ctk.CTkButton(tb, text="Importar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary"], command=self._import).pack(side="right", padx=2)
+        ctk.CTkButton(tb, text="Exportar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._export).pack(side="right", padx=2)
+        ctk.CTkButton(tb, text="Importar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._import).pack(side="right", padx=2)
 
         # Instrução
         instr = ctk.CTkFrame(self, fg_color=c["primary_soft"], corner_radius=10)
         instr.pack(fill="x", padx=20, pady=4)
-        ctk.CTkLabel(instr, text="① Escolha o campo   →   ② Escolha o documento   →   ③ Desenhe no visualizador   →   ④ Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary"]).pack(pady=6)
+        ctk.CTkLabel(instr, text="① Escolha o campo   →   ② Escolha o documento   →   ③ Desenhe no visualizador   →   ④ Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary_hover"]).pack(pady=6)
 
         # Dual lists
         dual = ctk.CTkFrame(self, fg_color="transparent")
@@ -74,9 +74,9 @@ class MapeamentoView(ctk.CTkFrame):
         # Status selection
         status = ctk.CTkFrame(self, fg_color="transparent")
         status.pack(fill="x", padx=20, pady=2)
-        self.lbl_ph_sel = ctk.CTkLabel(status, text="Campo: —", font=FONTS["body_small"], text_color=c["primary"])
+        self.lbl_ph_sel = ctk.CTkLabel(status, text="Campo: —", font=FONTS["body_small"], text_color=c["primary_hover"])
         self.lbl_ph_sel.pack(side="left")
-        self.lbl_doc_sel = ctk.CTkLabel(status, text="Documento: —", font=FONTS["body_small"], text_color=c["success"])
+        self.lbl_doc_sel = ctk.CTkLabel(status, text="Documento: —", font=FONTS["body_small"], text_color=c["success_hover"])
         self.lbl_doc_sel.pack(side="right")
 
         # Canvas
@@ -88,7 +88,7 @@ class MapeamentoView(ctk.CTkFrame):
         # Mapeamentos + salvar
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.pack(fill="x", padx=20, pady=(0,6))
-        ctk.CTkButton(bottom, text="💾  SALVAR MAPEAMENTO", height=40, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
+        ctk.CTkButton(bottom, text="💾  SALVAR MAPEAMENTO", height=40, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
 
         self.map_card = card(self)
         self.map_card.pack(fill="x", padx=20, pady=(0,10))
