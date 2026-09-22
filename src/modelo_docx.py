@@ -8,8 +8,13 @@ import re
 try:
     from docx import Document
     DOCX_SUPORTADO = True
-except ImportError:
+except ImportError as _e:
     DOCX_SUPORTADO = False
+    try:
+        from logger import log_erro
+        log_erro(f"Falha ao importar python-docx: {_e}")
+    except Exception:
+        pass
 
 
 PLACEHOLDER_RE = re.compile(r'\{\{\s*([^}]+?)\s*\}\}')
