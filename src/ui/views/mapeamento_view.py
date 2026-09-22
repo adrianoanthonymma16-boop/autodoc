@@ -8,6 +8,7 @@ import customtkinter as ctk
 
 from ui.canvas.image_canvas import ImageCanvas
 from ui.components.widgets import card, section_header
+from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_anexo
 
@@ -19,12 +20,21 @@ class MapeamentoView(ctk.CTkFrame):
         self.doc_svc = doc_service
         self.map_svc = map_service
         self.canvas = None
+        self._dirty = True
+        self._search_after = None
         self._build()
         self.state.subscribe(self._on_state)
+        self._dirty = False
+
+    def mark_dirty(self):
+        self._dirty = True
+
+    def refresh_view(self):
+        self._render_all()
 
     def _build(self):
         c = get_colors()
-        hdr = section_header(self, "Mapear", "Selecione o placeholder e o documento, depois desenhe o retângulo no visualizador", icon="🎯")
+        hdr = section_header(self, "Mapear", "Selecione o placeholder e o documento, depois desenhe o retângulo no visualizador", icon="target")
         hdr.pack(fill="x", padx=24, pady=(14,6))
 
         # Step indicator + progress
@@ -39,17 +49,17 @@ class MapeamentoView(ctk.CTkFrame):
         # Toolbar
         tb = ctk.CTkFrame(self, fg_color="transparent")
         tb.pack(fill="x", padx=24, pady=6)
-        ctk.CTkButton(tb, text="＋ Anexar", height=34, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Anexar", image=get_icon("plus", 16, c["text_on_primary"]), compound="left", height=34, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Limpar mapeamento", height=34, corner_radius=12, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning"], command=self._limpar).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Remover doc", height=34, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover_doc).pack(side="left", padx=4)
-        ctk.CTkButton(tb, text="↩ Desfazer", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=3)
+        ctk.CTkButton(tb, text="Desfazer", image=get_icon("undo", 16, c["text"]), compound="left", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=3)
         ctk.CTkButton(tb, text="Exportar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._export).pack(side="right", padx=3)
         ctk.CTkButton(tb, text="Importar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._import).pack(side="right", padx=3)
 
         # Instrução
         instr = ctk.CTkFrame(self, fg_color=c["primary_soft"], corner_radius=12, border_width=1, border_color=c["primary"])
         instr.pack(fill="x", padx=24, pady=6)
-        ctk.CTkLabel(instr, text="① Escolha o campo   →   ② Escolha o documento   →   ③ Desenhe no visualizador   →   ④ Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary_hover"]).pack(pady=8)
+        ctk.CTkLabel(instr, text="1. Escolha o campo   →   2. Escolha o documento   →   3. Desenhe no visualizador   →   4. Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary_hover"]).pack(pady=8)
 
         # Dual lists
         dual = ctk.CTkFrame(self, fg_color="transparent")
@@ -61,7 +71,8 @@ class MapeamentoView(ctk.CTkFrame):
         ctk.CTkLabel(left, text="Campos", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(10,4))
         self.search_ph = ctk.CTkEntry(left, placeholder_text="Buscar campo…", height=28, corner_radius=8, border_color=c["border"])
         self.search_ph.pack(fill="x", padx=10, pady=(0,6))
-        self.search_ph.bind("<KeyRelease>", lambda e: self._render_ph())
+        self.search_ph.bind("<KeyRelease>", lambda e: self._on_search_key())
+
         self.ph_scroll = ctk.CTkScrollableFrame(left, height=140, fg_color="transparent")
         self.ph_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
 
@@ -88,7 +99,7 @@ class MapeamentoView(ctk.CTkFrame):
         # Mapeamentos + salvar
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.pack(fill="x", padx=24, pady=(0,6))
-        ctk.CTkButton(bottom, text="💾  SALVAR MAPEAMENTO", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
+        ctk.CTkButton(bottom, text="SALVAR MAPEAMENTO", image=get_icon("save", 18, c["text_on_primary"]), compound="left", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
 
         self.map_card = card(self)
         self.map_card.pack(fill="x", padx=24, pady=(0,12))
@@ -101,9 +112,19 @@ class MapeamentoView(ctk.CTkFrame):
         self._pending_rect = None
         self._render_all()
 
+    def _on_search_key(self):
+        # debounce: evita rebuild total a cada tecla
+        if self._search_after is not None:
+            try:
+                self.after_cancel(self._search_after)
+            except Exception:
+                pass
+        self._search_after = self.after(200, self._render_ph)
+
     def _on_state(self, ev):
         if ev in ("modelo","modelos","mapeamento","documentos","doc_selecionado","backup"):
             self._render_all()
+            self._dirty = False
 
     def _render_all(self):
         total=len(self.state.placeholders)
@@ -171,9 +192,11 @@ class MapeamentoView(ctk.CTkFrame):
             bd=c["success"] if sel else c["border"]
             row=ctk.CTkFrame(self.doc_scroll, fg_color=bg, corner_radius=8, border_width=1, border_color=bd)
             row.pack(fill="x", pady=2)
-            icon="📄" if doc['tipo']=="pdf" else "🖼️"
-            lbl=ctk.CTkLabel(row, text=f"{icon}  {doc['nome']}", font=FONTS["body_small"], text_color=c["success"] if sel else c["text"], anchor="w")
-            lbl.pack(side="left", padx=10, pady=6)
+            iname = "doc" if doc['tipo'] == "pdf" else "image"
+            icolor = c["success"] if sel else c["text_muted"]
+            ctk.CTkLabel(row, text="", image=get_icon(iname, 16, icolor)).pack(side="left", padx=(10, 2), pady=6)
+            lbl=ctk.CTkLabel(row, text=doc['nome'], font=FONTS["body_small"], text_color=c["success"] if sel else c["text"], anchor="w")
+            lbl.pack(side="left", padx=(2, 10), pady=6)
             lbl.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
             row.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
 
@@ -301,6 +324,6 @@ class MapeamentoView(ctk.CTkFrame):
             row.pack(fill="x", pady=2, padx=2)
             ctk.CTkLabel(row, text=f"✓ {ph}", font=FONTS["body_small"], text_color=c["success"], width=160, anchor="w").pack(side="left", padx=8, pady=4)
             ctk.CTkLabel(row, text=f"→ {os.path.basename(dados['documento_path'])}", font=FONTS["caption"], text_color=c["text_muted"]).pack(side="left")
-            ctk.CTkButton(row, text="✕", width=24, height=20, corner_radius=6, fg_color="transparent", text_color=c["danger"], hover_color=c["danger_soft"], command=lambda p=ph: self.map_svc.remover_placeholder(p)).pack(side="right", padx=6)
+            ctk.CTkButton(row, text="", image=get_icon("x", 12, c["danger"]), width=24, height=20, corner_radius=6, fg_color="transparent", hover_color=c["danger_soft"], command=lambda p=ph: self.map_svc.remover_placeholder(p)).pack(side="right", padx=6)
         if self.state.lote_fontes:
             ctk.CTkLabel(self.map_scroll, text=f"LOTE: {len(self.state.lote_fontes)} doc(s)", font=FONTS["caption"], text_color=c["primary"]).pack(anchor="w", pady=(6,2), padx=6)
