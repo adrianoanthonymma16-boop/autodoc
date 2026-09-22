@@ -55,7 +55,9 @@ class Shell:
         x=(sw-ww)//2; y=(sh-wh)//2
         self.root.geometry(f"{ww}x{wh}+{x}+{y}")
         self.root.minsize(1020, 640)
-        ctk.set_appearance_mode("light")
+        from preferencias import carregar_preferencias
+        tema=carregar_preferencias().get('tema_ctk','light')
+        ctk.set_appearance_mode("Dark" if tema=="dark" else "Light")
 
     def _build_layout(self):
         c = get_colors()
