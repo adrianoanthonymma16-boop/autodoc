@@ -97,7 +97,8 @@ class GerarView(ctk.CTkFrame):
             dlg.destroy()
             self._abrir_edicao(dados)
         def on_err(ph, e): log_erro(f"OCR {ph}: {e}")
-        self.extracao.extrair_todos(on_progress=on_prog, on_done=lambda d: self.after(0, lambda: on_done(d)), on_error=on_err)
+        marshal=lambda fn: self.after(0, fn)
+        self.extracao.extrair_todos(on_progress=on_prog, on_done=lambda d: self.after(0, lambda: on_done(d)), on_error=on_err, marshal=marshal)
 
     def _preencher_manual(self):
         if not self.state.placeholders:

@@ -10,6 +10,7 @@ from services.documento import DocumentoService
 from services.geracao import GeracaoService
 from services.modelo import ModeloService
 from services.mapeamento import MapeamentoService
+from services.extracao import ExtracaoService
 
 
 @pytest.fixture
@@ -178,6 +179,26 @@ class TestModeloService:
         assert len(state.modelos) == 1
         assert state.modelos[0]["placeholders"] == ["X"]
 
+    @patch("services.modelo.extrair_placeholders_docx", return_value={"X"})
+    @patch("services.modelo.docx_suportado", return_value=True)
+    def test_adicionar_ao_lote_docx(self, mock_sup, mock_ext, state):
+        svc = ModeloService(state)
+        with patch("services.modelo.validar_extensao", return_value=(True, ".docx", "ok")):
+            ok, msg = svc.adicionar_ao_lote("/tmp/model.docx")
+        assert ok is True
+        assert len(state.modelos) == 1
+        assert state.modelos[0]["tipo"] == "docx"
+        assert state.modelos[0]["placeholders"] == ["X"]
+
+    @patch("services.modelo.extrair_placeholders_docx", return_value={"X"})
+    @patch("services.modelo.docx_suportado", return_value=False)
+    def test_adicionar_ao_lote_docx_nao_suportado(self, mock_sup, mock_ext, state):
+        svc = ModeloService(state)
+        with patch("services.modelo.validar_extensao", return_value=(True, ".docx", "ok")):
+            ok, msg = svc.adicionar_ao_lote("/tmp/model.docx")
+        assert ok is False
+        assert "DOCX" in msg
+
     @patch("services.modelo.extrair_placeholders_odt", return_value={"X"})
     def test_adicionar_ao_lote_duplicado(self, mock_ext, state):
         svc = ModeloService(state)
@@ -213,3 +234,63 @@ class TestMapeamentoServiceExtras:
         data = svc.restaurar_backup()
         assert data is not None
         assert "PH1" in data["mapeamento"]
+
+
+# --- ExtracaoService: callbacks marshallizados (thread-safe Tk) ---
+
+class TestExtracaoServiceCallbacks:
+    def _state_mapeado(self):
+        state = AppState()
+        state.placeholders = ["PH1", "PH2"]
+        state.mapeamento["PH1"] = {
+            "documento_path": "/tmp/a.png",
+            "documento_tipo": "imagem",
+            "x1": 0, "y1": 0, "x2": 10, "y2": 10,
+        }
+        return state
+
+    @patch("services.extracao.extrair_texto_do_recorte", return_value="TEXTO")
+    @patch("services.extracao.Image.open")
+    def test_callbacks_marshallizados_apenas_mapeados(self, mock_open, mock_ocr):
+        from services.extracao import ExtracaoService
+        svc = ExtracaoService(self._state_mapeado())
+        # marshal simula after(0, fn): agenda e devolve; main loop depois executa
+        agenda = []
+        def marshal(fn):
+            agenda.append(fn)
+            return fn
+        on_prog = MagicMock()
+        on_done = MagicMock()
+        on_err = MagicMock()
+
+        thread = svc.extrair_todos(on_progress=on_prog, on_done=on_done, on_error=on_err, marshal=marshal)
+        thread.join(timeout=5)
+
+        # nenhum callback toca Tk fora da main thread: tudo foi agendado
+        assert on_prog.call_count == 0
+        assert on_err.call_count == 0
+        # on_done continua sendo agendado pelo caller na view (não no serviço)
+        on_done.assert_called_once()
+        dados = on_done.call_args[0][0]
+        assert dados["PH1"] == "TEXTO"
+        assert dados["PH2"] == ""  # não mapeado fica vazio
+        # executa a fila agendada (simulando a main thread)
+        for fn in agenda:
+            fn()
+        assert on_prog.call_count == 2  # PH1 e PH2
+        assert on_err.call_count == 0
+
+    @patch("services.extracao.extrair_texto_do_recorte", side_effect=RuntimeError("ocr fail"))
+    def test_on_error_marshallizado(self, mock_ocr):
+        from services.extracao import ExtracaoService
+        svc = ExtracaoService(self._state_mapeado())
+        agenda = []
+        def marshal(fn):
+            agenda.append(fn)
+            return fn
+        on_err = MagicMock()
+        svc.extrair_todos(on_error=on_err, marshal=marshal).join(timeout=5)
+        assert on_err.call_count == 0  # não chamado direto no worker
+        for fn in agenda:
+            fn()
+        assert on_err.call_count == 1

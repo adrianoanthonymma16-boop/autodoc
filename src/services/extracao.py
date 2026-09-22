@@ -14,8 +14,14 @@ class ExtracaoService:
     def __init__(self, state):
         self.state = state
 
-    def extrair_todos(self, on_progress=None, on_done=None, on_error=None):
-        """Roda em thread"""
+    def extrair_todos(self, on_progress=None, on_done=None, on_error=None, marshal=None):
+        """Roda em thread. Callbacks de UI (on_progress/on_error) devem ser
+        marshallizados pelo caller (ex.: widget.after(0, ...)) via `marshal`
+        para não tocar em Tk fora da main thread. on_done continua sendo
+        agendado pelo próprio caller na view. `marshal` é `callable -> callable`;
+        quando ausente, os callbacks são invocados direto (uso off-UI)."""
+        marshal = marshal or (lambda fn: fn)
+
         def worker():
             dados_temp = {}
             total = len(self.state.placeholders)
@@ -33,12 +39,13 @@ class ExtracaoService:
                         dados_temp[ph] = texto if texto else ""
                     except Exception as e:
                         if on_error:
-                            on_error(ph, str(e))
+                            err = str(e)
+                            marshal(lambda ph=ph, err=err: on_error(ph, err))
                         dados_temp[ph] = ""
                 else:
                     dados_temp[ph] = ""
                 if on_progress:
-                    on_progress(i+1, total, ph)
+                    marshal(lambda i=i, ph=ph, total=total: on_progress(i+1, total, ph))
             if on_done:
                 on_done(dados_temp)
         t = threading.Thread(target=worker, daemon=True)
