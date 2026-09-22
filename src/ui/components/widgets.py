@@ -28,8 +28,10 @@ def kpi_card(parent, label, value, accent="primary"):
     # top bar
     bar = ctk.CTkFrame(f, height=3, fg_color=color, corner_radius=2)
     bar.pack(fill="x", padx=0, pady=0)
-    ctk.CTkLabel(f, text=value, font=("Inter", 24, "bold"), text_color=c["text"]).pack(anchor="w", padx=16, pady=(12,0))
+    value_label = ctk.CTkLabel(f, text=value, font=("Inter", 24, "bold"), text_color=c["text"])
+    value_label.pack(anchor="w", padx=16, pady=(12,0))
     ctk.CTkLabel(f, text=label, font=FONTS["caption"], text_color=c["text_muted"]).pack(anchor="w", padx=16, pady=(0,12))
+    f.value_label = value_label
     return f
 
 def pill(parent, text, kind="primary"):

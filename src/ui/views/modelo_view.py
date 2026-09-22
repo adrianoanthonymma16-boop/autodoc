@@ -84,22 +84,9 @@ class ModeloView(ctk.CTkFrame):
         n_modelos = len(self.state.modelos) if self.state.modelos else (1 if self.state.modelo_path else 0)
         n_ph = len(self.state.placeholders)
         n_map = len(self.state.mapeamento)
-        # atualiza KPIs recriando labels internos (simplifica)
-        for w in self.kpi_modelos.winfo_children():
-            if isinstance(w, ctk.CTkLabel):
-                txt = w.cget("text")
-                if txt.isdigit() or "/" in txt:
-                    w.destroy()
-        # jeito simples: destruir e recriar
-        for kpi, val in [(self.kpi_modelos, str(n_modelos)), (self.kpi_placeholders, str(n_ph)), (self.kpi_mapeados, f"{n_map}/{n_ph}" if n_ph else "0/0")]:
-            for ch in kpi.winfo_children():
-                if isinstance(ch, ctk.CTkLabel) and ch.cget("font") != FONTS["caption"]:
-                    # identifica value label heurística: font size 24
-                    try:
-                        if "24" in str(ch.cget("font")):
-                            ch.configure(text=val)
-                    except: pass
-        # fallback se não achou: recria rápido (ignora complexidade, atualiza via destroy/repack? simplificamos com novo card)
+        self.kpi_modelos.value_label.configure(text=str(n_modelos))
+        self.kpi_placeholders.value_label.configure(text=str(n_ph))
+        self.kpi_mapeados.value_label.configure(text=f"{n_map}/{n_ph}" if n_ph else "0/0")
         self._render_placeholders()
         self._render_lote()
 
