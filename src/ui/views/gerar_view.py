@@ -11,6 +11,7 @@ from historico import adicionar_ao_historico
 from logger import log_erro, log_info
 from preferencias import carregar_preferencias, set_preferencia
 from ui.components.widgets import card, section_header
+from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores_extra import sugerir_validacao, validar_campo
 
@@ -21,12 +22,20 @@ class GerarView(ctk.CTkFrame):
         self.state = state
         self.extracao = extracao_service
         self.geracao = geracao_service
+        self._dirty = True
         self._build()
         self.state.subscribe(self._on_state)
+        self._dirty = False
+
+    def mark_dirty(self):
+        self._dirty = True
+
+    def refresh_view(self):
+        self._refresh_status()
 
     def _build(self):
         c=get_colors()
-        hdr=section_header(self, "Gerar Documento", "Extraia via OCR ou preencha manualmente, revise e gere o arquivo final", icon="✨")
+        hdr=section_header(self, "Gerar Documento", "Extraia via OCR ou preencha manualmente, revise e gere o arquivo final", icon="spark")
         hdr.pack(fill="x", padx=24, pady=(18,8))
 
         # KPI de prontidão (card tintado)
@@ -47,9 +56,9 @@ class GerarView(ctk.CTkFrame):
         # actions
         actions=ctk.CTkFrame(self, fg_color="transparent")
         actions.pack(fill="x", padx=24, pady=8)
-        ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=6)
-        ctk.CTkButton(actions, text="✏️  Preencher manual", height=44, corner_radius=12, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=6)
-        ctk.CTkButton(actions, text="🚀  Gerar", height=44, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=6)
+        ctk.CTkButton(actions, text="Extrair e Editar", image=get_icon("search", 18, c["text_on_primary"]), compound="left", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=6)
+        ctk.CTkButton(actions, text="Preencher manual", image=get_icon("edit", 18, c["primary_hover"]), compound="left", height=44, corner_radius=12, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=6)
+        ctk.CTkButton(actions, text="Gerar", image=get_icon("rocket", 18, c["text_on_primary"]), compound="left", height=44, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=6)
 
         self.status=ctk.CTkLabel(self, text="Dica: mapeie todos os campos para melhor resultado", font=FONTS["caption"], text_color=c["text_muted"])
         self.status.pack(fill="x", padx=24, pady=(0,12))
@@ -58,6 +67,7 @@ class GerarView(ctk.CTkFrame):
     def _on_state(self, ev):
         if ev in ("mapeamento","modelo","backup"):
             self._refresh_status()
+            self._dirty = False
 
     def _refresh_status(self):
         total=len(self.state.placeholders)
@@ -65,9 +75,9 @@ class GerarView(ctk.CTkFrame):
         if total==0:
             self.lbl_pronto.configure(text="Nenhum modelo")
         elif mapped==total:
-            self.lbl_pronto.configure(text=f"✅ Pronto para gerar  •  {mapped}/{total} mapeados", text_color=get_colors()["success_hover"])
+            self.lbl_pronto.configure(text=f"Pronto para gerar  •  {mapped}/{total} mapeados", text_color=get_colors()["success_hover"])
         elif mapped>0:
-            self.lbl_pronto.configure(text=f"⚠️ {mapped}/{total} mapeados", text_color=get_colors()["warning"])
+            self.lbl_pronto.configure(text=f"{mapped}/{total} mapeados — falta mapear", text_color=get_colors()["warning"])
         else:
             self.lbl_pronto.configure(text="Nenhum mapeamento", text_color=get_colors()["text_muted"])
 
@@ -85,7 +95,10 @@ class GerarView(ctk.CTkFrame):
         dlg.geometry("360x140")
         dlg.transient(self.winfo_toplevel()); dlg.grab_set()
         c=get_colors()
-        ctk.CTkLabel(dlg, text="🔍  Extraindo com OCR…", font=FONTS["h2"]).pack(pady=12)
+        top = ctk.CTkFrame(dlg, fg_color="transparent")
+        top.pack(pady=12)
+        ctk.CTkLabel(top, text="", image=get_icon("search", 20, c["text"])).pack(side="left", padx=(0, 8))
+        ctk.CTkLabel(top, text="Extraindo com OCR…", font=FONTS["h2"]).pack(side="left")
         prog=ctk.CTkProgressBar(dlg, width=300)
         prog.pack(pady=6); prog.set(0)
         lbl=ctk.CTkLabel(dlg, text="0%", font=FONTS["caption"], text_color=c["text_muted"])
@@ -145,10 +158,10 @@ class GerarView(ctk.CTkFrame):
             self.text.delete("1.0", tk.END)
             for k,v in novos.items():
                 self.text.insert(tk.END, f"{k}:\n  {v}\n\n")
-            self.status.configure(text="✅ Dados revisados — clique em Gerar")
+            self.status.configure(text="Dados revisados — clique em Gerar")
         bar=ctk.CTkFrame(win, fg_color="transparent")
         bar.pack(pady=10)
-        ctk.CTkButton(bar, text="✅ Confirmar", command=confirmar, fg_color=get_colors()["success"], hover_color=get_colors()["success_hover"], corner_radius=10, height=38).pack(side="left", padx=6)
+        ctk.CTkButton(bar, text="Confirmar", image=get_icon("check", 16, get_colors()["text_on_primary"]), compound="left", command=confirmar, fg_color=get_colors()["success"], hover_color=get_colors()["success_hover"], corner_radius=10, height=38).pack(side="left", padx=6)
         ctk.CTkButton(bar, text="Cancelar", command=win.destroy, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], corner_radius=10, height=38).pack(side="left", padx=6)
 
     def _gerar(self):
