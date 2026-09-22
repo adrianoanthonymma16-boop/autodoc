@@ -131,21 +131,38 @@ sleep 0.3
 echo "50"
 echo "# Instalando Pillow (com suporte a ImageTk)..."
 sudo apt-get install -y python3-pil python3-pil.imagetk 2>/dev/null || true
+if python3 -c "import PIL" 2>/dev/null; then
+    echo "# Pillow OK."
+else
+    echo "# ERRO: Pillow falhou ao instalar — tente manualmente com: sudo apt install python3-pil"
+    exit 1
+fi
 sleep 0.5
 
 echo "60"
 echo "# Instalando OpenCV..."
 sudo apt-get install -y python3-opencv 2>/dev/null || true
+if ! python3 -c "import cv2" 2>/dev/null; then
+    echo "# Aviso: OpenCV indisponível — recursos avançados desativados."
+fi
 sleep 0.5
 
 echo "70"
 echo "# Instalando pytesseract..."
 sudo pip3 install pytesseract --break-system-packages 2>/dev/null || true
+python3 -c "import pytesseract" 2>/dev/null || { echo "# ERRO: pytesseract falhou ao instalar"; exit 1; }
 sleep 0.3
 
 echo "75"
-echo "# Instalando python-docx, pypdfium2 e ttkbootstrap..."
-sudo pip3 install python-docx pypdfium2 ttkbootstrap --break-system-packages 2>/dev/null || true
+echo "# Instalando python-docx, lxml, pypdfium2 e ttkbootstrap..."
+for dep in "python-docx:docx" "lxml:lxml" "pypdfium2:pypdfium2" "ttkbootstrap:ttkbootstrap"; do
+    pkg="${dep%%:*}"; mod="${dep##*:}"
+    sudo pip3 install "$pkg" --break-system-packages 2>/dev/null || true
+    if ! python3 -c "import $mod" 2>/dev/null; then
+        echo "# ERRO: $pkg falhou ao instalar/importar"
+        exit 1
+    fi
+done
 sleep 0.5
 
 echo "78"
@@ -153,6 +170,8 @@ echo "# Verificando Tesseract OCR..."
 if ! command -v tesseract &>/dev/null; then
     echo "# Tesseract não encontrado — instalando via apt..."
     sudo apt-get install -y tesseract-ocr tesseract-ocr-por 2>/dev/null || true
+    command -v tesseract &>/dev/null || { echo "# ERRO: Tesseract falhou ao instalar — sudo apt install tesseract-ocr tesseract-ocr-por"; exit 1; }
+    echo "# Tesseract OK."
 else
     echo "# Tesseract já instalado."
 fi
