@@ -25,11 +25,11 @@ class MapeamentoView(ctk.CTkFrame):
     def _build(self):
         c = get_colors()
         hdr = section_header(self, "Mapear", "Selecione o placeholder e o documento, depois desenhe o retângulo no visualizador", icon="🎯")
-        hdr.pack(fill="x", padx=20, pady=(12,4))
+        hdr.pack(fill="x", padx=24, pady=(14,6))
 
         # Step indicator + progress
         self.step = ctk.CTkFrame(self, fg_color="transparent")
-        self.step.pack(fill="x", padx=20, pady=4)
+        self.step.pack(fill="x", padx=24, pady=4)
         self.lbl_progress = ctk.CTkLabel(self.step, text="0/0 mapeados", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_progress.pack(side="left")
         self.prog = ctk.CTkProgressBar(self.step, height=8, corner_radius=4, progress_color=c["success"], fg_color=c["border"])
@@ -38,22 +38,22 @@ class MapeamentoView(ctk.CTkFrame):
 
         # Toolbar
         tb = ctk.CTkFrame(self, fg_color="transparent")
-        tb.pack(fill="x", padx=20, pady=6)
-        ctk.CTkButton(tb, text="＋ Anexar", height=32, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=3)
-        ctk.CTkButton(tb, text="Limpar mapeamento", height=32, corner_radius=10, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning"], command=self._limpar).pack(side="left", padx=3)
-        ctk.CTkButton(tb, text="Remover doc", height=32, corner_radius=10, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover_doc).pack(side="left", padx=3)
-        ctk.CTkButton(tb, text="↩ Desfazer", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=2)
-        ctk.CTkButton(tb, text="Exportar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._export).pack(side="right", padx=2)
-        ctk.CTkButton(tb, text="Importar", height=30, corner_radius=8, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._import).pack(side="right", padx=2)
+        tb.pack(fill="x", padx=24, pady=6)
+        ctk.CTkButton(tb, text="＋ Anexar", height=34, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Limpar mapeamento", height=34, corner_radius=12, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning"], command=self._limpar).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Remover doc", height=34, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover_doc).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="↩ Desfazer", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=3)
+        ctk.CTkButton(tb, text="Exportar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._export).pack(side="right", padx=3)
+        ctk.CTkButton(tb, text="Importar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._import).pack(side="right", padx=3)
 
         # Instrução
-        instr = ctk.CTkFrame(self, fg_color=c["primary_soft"], corner_radius=10)
-        instr.pack(fill="x", padx=20, pady=4)
-        ctk.CTkLabel(instr, text="① Escolha o campo   →   ② Escolha o documento   →   ③ Desenhe no visualizador   →   ④ Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary_hover"]).pack(pady=6)
+        instr = ctk.CTkFrame(self, fg_color=c["primary_soft"], corner_radius=12, border_width=1, border_color=c["primary"])
+        instr.pack(fill="x", padx=24, pady=6)
+        ctk.CTkLabel(instr, text="① Escolha o campo   →   ② Escolha o documento   →   ③ Desenhe no visualizador   →   ④ Clique em SALVAR MAPEAMENTO", font=("Inter", 10, "bold"), text_color=c["primary_hover"]).pack(pady=8)
 
         # Dual lists
         dual = ctk.CTkFrame(self, fg_color="transparent")
-        dual.pack(fill="x", padx=20, pady=6)
+        dual.pack(fill="x", padx=24, pady=6)
         dual.grid_columnconfigure((0,1), weight=1)
 
         left = card(dual)
@@ -87,11 +87,11 @@ class MapeamentoView(ctk.CTkFrame):
 
         # Mapeamentos + salvar
         bottom = ctk.CTkFrame(self, fg_color="transparent")
-        bottom.pack(fill="x", padx=20, pady=(0,6))
-        ctk.CTkButton(bottom, text="💾  SALVAR MAPEAMENTO", height=40, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
+        bottom.pack(fill="x", padx=24, pady=(0,6))
+        ctk.CTkButton(bottom, text="💾  SALVAR MAPEAMENTO", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._salvar).pack(fill="x")
 
         self.map_card = card(self)
-        self.map_card.pack(fill="x", padx=20, pady=(0,10))
+        self.map_card.pack(fill="x", padx=24, pady=(0,12))
         ctk.CTkLabel(self.map_card, text="Mapeamentos", font=FONTS["caption"], text_color=c["text_muted"]).pack(anchor="w", padx=12, pady=(6,2))
         self.map_scroll = ctk.CTkScrollableFrame(self.map_card, height=80, fg_color="transparent")
         self.map_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))

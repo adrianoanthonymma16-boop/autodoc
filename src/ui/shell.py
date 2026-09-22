@@ -32,6 +32,7 @@ NAV_ITEMS = [
 class Shell:
     def __init__(self, root: ctk.CTk):
         self.root = root
+        self._collapsed = None
         self.state = AppState()
         self.modelo_svc = ModeloService(self.state)
         self.doc_svc = DocumentoService(self.state)
@@ -71,21 +72,32 @@ class Shell:
         self.sidebar.grid_propagate(False)
         self.sidebar.grid_rowconfigure(6, weight=1)
 
-        # logo
+        # logo — badge squircle + wordmark (Dabang)
         logo = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        logo.pack(fill="x", padx=16, pady=(18,12))
-        ctk.CTkLabel(logo, text="◆  AutoDoc", font=("Inter", 18, "bold"), text_color=c["text"]).pack(anchor="w")
-        ctk.CTkLabel(logo, text=f"v{VERSAO}  •  Premium", font=("Inter", 10), text_color=c["text_faint"]).pack(anchor="w")
+        logo.pack(fill="x", padx=16, pady=(20,16))
+        row = ctk.CTkFrame(logo, fg_color="transparent")
+        row.pack(anchor="w")
+        mark = ctk.CTkFrame(row, width=36, height=36, corner_radius=10, fg_color=c["primary"])
+        mark.pack(side="left", ipady=0)
+        mark.pack_propagate(False)
+        ctk.CTkLabel(mark, text="◆", font=("Inter", 16, "bold"), text_color=c["text_on_primary"]).pack(expand=True)
+        texts = ctk.CTkFrame(row, fg_color="transparent")
+        texts.pack(side="left", padx=10)
+        ctk.CTkLabel(texts, text="AutoDoc", font=("Inter", 17, "bold"), text_color=c["text"]).pack(anchor="w")
+        ctk.CTkLabel(texts, text=f"v{VERSAO} • Premium", font=("Inter", 10), text_color=c["text_faint"]).pack(anchor="w")
+        self._logo_texts = texts
 
-        # nav buttons
+        # nav buttons — pill ativa estilo Dabang/Horizon
         self.nav_btns = {}
+        self.nav_labels = {}
         for label, icon, key in NAV_ITEMS:
             btn = ctk.CTkButton(self.sidebar, text=f"{icon}   {label}", anchor="w",
                                 fg_color="transparent", hover_color=c["sidebar_hover"],
-                                text_color=c["text_muted"], corner_radius=10, height=38,
-                                font=("Inter", 12), command=lambda k=key: self._switch(k))
-            btn.pack(fill="x", padx=10, pady=3)
+                                text_color=c["text_muted"], corner_radius=12, height=40,
+                                font=("Inter", 13), command=lambda k=key: self._switch(k))
+            btn.pack(fill="x", padx=12, pady=3)
             self.nav_btns[key]=btn
+            self.nav_labels[key]=(icon, label)
 
         # stepper progress minimal
         self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso", font=("Inter", 10, "bold"), text_color=c["text_faint"])
@@ -143,7 +155,6 @@ class Shell:
                 btn.configure(fg_color="transparent", text_color=c["text_muted"], hover_color=c["sidebar_hover"])
         self.views[key].tkraise()
         self.current=key
-        # refresh historico when entering
         if key=="historico":
             self.views["historico"].refresh()
         if key=="biblioteca":
@@ -161,13 +172,34 @@ class Shell:
         self.root.bind("<Configure>", self._on_resize)
 
     def _on_resize(self, e):
-        if e.widget!=self.root: return
-        w=e.width
-        if w<1100:
+        if e.widget != self.root:
+            return
+        w = e.width
+        collapsed = w < 1100
+        # idempotente — evita Configure storm (sidebar width/pack dispara novo Configure)
+        if getattr(self, "_collapsed", None) == collapsed:
+            return
+        self._collapsed = collapsed
+        if collapsed:
             self.sidebar.configure(width=72)
-            # hide text to icons only? keep simple: reduce width
         else:
-            self.sidebar.configure(width=220)
+            self.sidebar.configure(width=232)
+        # icon-only na sidebar colapsada (responsividade)
+        for key, btn in self.nav_btns.items():
+            icon, label = self.nav_labels.get(key, ("", ""))
+            btn.configure(text=icon if collapsed else f"{icon}   {label}")
+        if hasattr(self, "_logo_texts"):
+            for child in self._logo_texts.winfo_children():
+                if collapsed:
+                    child.pack_forget()
+                else:
+                    child.pack(anchor="w")
+        if collapsed:
+            self.step_label.pack_forget()
+            self.step_bar.pack_forget()
+        else:
+            self.step_label.pack(anchor="w", padx=16, pady=(16, 4))
+            self.step_bar.pack(fill="x", padx=16)
 
     def _save_shortcut(self):
         if self.current=="mapear":
@@ -221,8 +253,11 @@ class Shell:
                 self._refresh_bottom_buttons(child, c)
 
     def _refresh_logo_labels(self, frame, c):
-        """Atualiza cores dos labels do logo (AutoDoc / Premium)"""
+        """Atualiza cores dos labels do logo (AutoDoc / Premium)."""
         for label in frame.winfo_children():
+            if isinstance(label, ctk.CTkFrame):
+                self._refresh_logo_labels(label, c)
+                continue
             if not isinstance(label, ctk.CTkLabel):
                 continue
             text = label.cget("text")

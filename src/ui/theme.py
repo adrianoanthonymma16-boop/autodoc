@@ -32,6 +32,12 @@ LIGHT = {
     "sidebar_hover": "#1E293B",
     "sidebar_active": "#047857",
     "icon": "#475569",
+    # tintados KPI (Dabang) — texto sobre *_soft usa *_hover p/ AA
+    "primary_tint": "#ECFDF5",
+    "success_tint": "#F0FDF4",
+    "accent_tint": "#F0FDFA",
+    "warning_tint": "#FFFBEB",
+    "danger_tint": "#FEF2F2",
 }
 
 DARK = {
@@ -62,18 +68,28 @@ DARK = {
     "sidebar_hover": "#0F172A",
     "sidebar_active": "#10B981",
     "icon": "#94A3B8",
+    # tintados KPI dark (Vision) — fundos escuros com borda sutil
+    "primary_tint": "#064E3B",
+    "success_tint": "#065F46",
+    "accent_tint": "#134E4A",
+    "warning_tint": "#78350F",
+    "danger_tint": "#7F1D1D",
 }
 
 FONTS = {
-    "display": ("Inter", 22, "bold"),
-    "h1": ("Inter", 18, "bold"),
-    "h2": ("Inter", 14, "bold"),
-    "h3": ("Inter", 12, "bold"),
+    "display": ("Inter", 26, "bold"),
+    "h1": ("Inter", 20, "bold"),
+    "h2": ("Inter", 15, "bold"),
+    "h3": ("Inter", 13, "bold"),
     "body": ("Inter", 12),
     "body_small": ("Inter", 11),
     "caption": ("Inter", 10),
     "mono": ("JetBrains Mono", 11),
 }
+
+# Tokens de layout (Dabang / Horizon / Vision)
+RADIUS = {"card": 18, "btn": 12, "pill": 999, "input": 12, "nav": 12}
+SPACING = {"xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24}
 
 def get_colors():
     mode = ctk.get_appearance_mode()

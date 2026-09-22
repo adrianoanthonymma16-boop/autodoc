@@ -27,32 +27,32 @@ class GerarView(ctk.CTkFrame):
     def _build(self):
         c=get_colors()
         hdr=section_header(self, "Gerar Documento", "Extraia via OCR ou preencha manualmente, revise e gere o arquivo final", icon="✨")
-        hdr.pack(fill="x", padx=20, pady=(16,6))
+        hdr.pack(fill="x", padx=24, pady=(18,8))
 
-        # KPIs de prontidão
+        # KPI de prontidão (card tintado)
         kpi_row=ctk.CTkFrame(self, fg_color="transparent")
-        kpi_row.pack(fill="x", padx=20, pady=6)
-        self.card_pronto=card(kpi_row)
-        self.card_pronto.pack(side="left", fill="x", expand=True, padx=4)
-        self.lbl_pronto=ctk.CTkLabel(self.card_pronto, text="Aguardando…", font=FONTS["h3"])
-        self.lbl_pronto.pack(pady=12)
+        kpi_row.pack(fill="x", padx=24, pady=8)
+        self.card_pronto=card(kpi_row, fg_color=c["primary_tint"], border_color=c["primary"])
+        self.card_pronto.pack(side="left", fill="x", expand=True, padx=6)
+        self.lbl_pronto=ctk.CTkLabel(self.card_pronto, text="Aguardando…", font=FONTS["h3"], text_color=c["text"])
+        self.lbl_pronto.pack(padx=16, pady=16)
 
         # preview
         preview=card(self)
-        preview.pack(fill="both", expand=True, padx=20, pady=8)
-        ctk.CTkLabel(preview, text="Dados extraídos", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(10,4))
-        self.text = ctk.CTkTextbox(preview, height=180, corner_radius=10, font=FONTS["body_small"], border_width=1, border_color=c["border"])
-        self.text.pack(fill="both", expand=True, padx=10, pady=(0,10))
+        preview.pack(fill="both", expand=True, padx=24, pady=8)
+        ctk.CTkLabel(preview, text="Dados extraídos", font=FONTS["h2"], text_color=c["text"]).pack(anchor="w", padx=16, pady=(14,6))
+        self.text = ctk.CTkTextbox(preview, height=180, corner_radius=12, font=FONTS["body_small"], border_width=1, border_color=c["border"])
+        self.text.pack(fill="both", expand=True, padx=12, pady=(0,12))
 
         # actions
         actions=ctk.CTkFrame(self, fg_color="transparent")
-        actions.pack(fill="x", padx=20, pady=8)
-        ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=42, corner_radius=10, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=4)
-        ctk.CTkButton(actions, text="✏️  Preencher manual", height=42, corner_radius=10, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=4)
-        ctk.CTkButton(actions, text="🚀  Gerar", height=42, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=4)
+        actions.pack(fill="x", padx=24, pady=8)
+        ctk.CTkButton(actions, text="🔍  Extrair e Editar", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=FONTS["h3"], command=self._extrair).pack(side="left", expand=True, fill="x", padx=6)
+        ctk.CTkButton(actions, text="✏️  Preencher manual", height=44, corner_radius=12, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=6)
+        ctk.CTkButton(actions, text="🚀  Gerar", height=44, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=6)
 
         self.status=ctk.CTkLabel(self, text="Dica: mapeie todos os campos para melhor resultado", font=FONTS["caption"], text_color=c["text_muted"])
-        self.status.pack(fill="x", padx=20, pady=(0,10))
+        self.status.pack(fill="x", padx=24, pady=(0,12))
         self._refresh_status()
 
     def _on_state(self, ev):
