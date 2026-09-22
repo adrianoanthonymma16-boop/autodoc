@@ -14,17 +14,26 @@ def card(parent, **kwargs):
     kwargs.setdefault("border_color", c["border"])
     return ctk.CTkFrame(parent, **kwargs)
 
-def section_header(parent, title, subtitle=None, icon=""):
+def section_header(parent, title, subtitle=None, icon=None):
+    """Cabeçalho de seção. `icon` é nome de SVG em assets/icons (sem emoji)."""
+    from ui.icons import available, get
     c = get_colors()
     f = ctk.CTkFrame(parent, fg_color="transparent")
-    txt = f"{icon}  {title}" if icon else title
-    ctk.CTkLabel(f, text=txt, font=FONTS["display"], text_color=c["text"]).pack(anchor="w")
+    row = ctk.CTkFrame(f, fg_color="transparent")
+    row.pack(anchor="w")
+    if icon and available(icon):
+        ctk.CTkLabel(row, text="", image=get(icon, 24, c["primary"]),
+                     width=28).pack(side="left", padx=(0, 8))
+    tx = ctk.CTkFrame(row, fg_color="transparent")
+    tx.pack(side="left")
+    ctk.CTkLabel(tx, text=title, font=FONTS["display"], text_color=c["text"]).pack(anchor="w")
     if subtitle:
-        ctk.CTkLabel(f, text=subtitle, font=FONTS["body"], text_color=c["text_muted"], wraplength=800, justify="left").pack(anchor="w", pady=(4,0))
+        ctk.CTkLabel(tx, text=subtitle, font=FONTS["body"], text_color=c["text_muted"], wraplength=800, justify="left").pack(anchor="w", pady=(2,0))
     return f
 
-def kpi_card(parent, label, value, accent="primary", icon=""):
-    """KPI estilo Dabang/Horizon: fundo tintado + badge circular + valor grande."""
+def kpi_card(parent, label, value, accent="primary", icon="doc"):
+    """KPI estilo Dabang/Horizon: fundo tintado + badge circular com SVG + valor grande."""
+    from ui.icons import available, get
     c = get_colors()
     color = c[accent] if accent in c else c["primary"]
     tint = c.get(f"{accent}_tint", c["primary_soft"])
@@ -35,8 +44,12 @@ def kpi_card(parent, label, value, accent="primary", icon=""):
     badge = ctk.CTkFrame(hdr, width=32, height=32, corner_radius=16, fg_color=color)
     badge.pack(side="left")
     badge.pack_propagate(False)
-    ctk.CTkLabel(badge, text=icon or "●", font=("Inter", 14, "bold"),
-                 text_color=c["text_on_primary"]).pack(expand=True)
+    if icon and available(icon):
+        ctk.CTkLabel(badge, text="",
+                     image=get(icon, 16, c["text_on_primary"])).pack(expand=True)
+    else:
+        ctk.CTkLabel(badge, text="•", font=("Inter", 14, "bold"),
+                     text_color=c["text_on_primary"]).pack(expand=True)
     ctk.CTkLabel(hdr, text=label, font=FONTS["caption"], text_color=c["text_muted"]).pack(side="left", padx=10)
     # valor grande
     value_label = ctk.CTkLabel(f, text=value, font=("Inter", 26, "bold"), text_color=c["text"])
@@ -54,9 +67,11 @@ def pill(parent, text, kind="primary"):
     return lbl
 
 def empty_state(parent, icon, title, subtitle, button_text=None, button_cmd=None):
+    from ui.icons import available, get
     c = get_colors()
     f = ctk.CTkFrame(parent, fg_color="transparent")
-    ctk.CTkLabel(f, text=icon, font=("Inter", 42), text_color=c["icon"]).pack(pady=(20,5))
+    if icon and available(icon):
+        ctk.CTkLabel(f, text="", image=get(icon, 44, c["icon"])).pack(pady=(20,5))
     ctk.CTkLabel(f, text=title, font=FONTS["h2"], text_color=c["text"]).pack()
     ctk.CTkLabel(f, text=subtitle, font=FONTS["body_small"], text_color=c["text_muted"], wraplength=420, justify="center").pack(pady=(4,12))
     if button_text and button_cmd:
