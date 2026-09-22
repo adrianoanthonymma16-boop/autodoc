@@ -179,25 +179,37 @@ class GerarView(ctk.CTkFrame):
         pasta=filedialog.askdirectory(title="Selecione pasta de saída")
         if not pasta: return
         fontes=self.state.lote_fontes if tem_lote else [None]
-        proc=0; errs=[]
-        for fonte in fontes:
-            dados_fonte=self.extracao.extrair_de_fonte(fonte) if tem_lote else self.state.dados_extraidos
-            for m in modelos:
-                dados={ph: dados_fonte.get(ph,"") for ph in m['placeholders']}
-                try:
-                    ext=os.path.splitext(m['path'])[1]
-                    base=os.path.splitext(os.path.basename(m['path']))[0]
-                    if tem_lote:
-                        fonte_nome=os.path.splitext(os.path.basename(fonte['documento_path']))[0]
-                        out=os.path.join(pasta, f"{base}_{fonte_nome}{ext}")
-                    else:
-                        out=os.path.join(pasta, f"{base}{ext}")
-                    self.geracao.gerar_um(m['path'], m['tipo'], dados, out)
-                    proc+=1
-                    adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]))
-                except Exception as e:
-                    errs.append(f"{os.path.basename(m['path'])}: {e}")
-        msg=f"Concluído! {proc} documento(s)"
-        if errs: msg+="\nErros:\n"+"\n".join(errs)
-        messagebox.showinfo("Geração", msg)
-        self.status.configure(text=f"{proc} gerado(s)")
+        total_jobs=len(fontes)*len(modelos)
+
+        def run():
+            proc=0; errs=[]
+            for fonte in fontes:
+                dados_fonte=self.extracao.extrair_de_fonte(fonte) if tem_lote else self.state.dados_extraidos
+                for m in modelos:
+                    dados={ph: dados_fonte.get(ph,"") for ph in m['placeholders']}
+                    try:
+                        ext=os.path.splitext(m['path'])[1]
+                        base=os.path.splitext(os.path.basename(m['path']))[0]
+                        if tem_lote:
+                            fonte_nome=os.path.splitext(os.path.basename(fonte['documento_path']))[0]
+                            out=os.path.join(pasta, f"{base}_{fonte_nome}{ext}")
+                        else:
+                            out=os.path.join(pasta, f"{base}{ext}")
+                        self.geracao.gerar_um(m['path'], m['tipo'], dados, out)
+                        proc+=1
+                        adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]))
+                    except Exception as e:
+                        errs.append(f"{os.path.basename(m['path'])}: {e}")
+            return proc, errs
+
+        def done(proc, errs):
+            msg=f"Concluído! {proc} documento(s)"
+            if errs: msg+="\nErros:\n"+"\n".join(errs)
+            messagebox.showinfo("Geração", msg)
+            self.status.configure(text=f"{proc} gerado(s)")
+
+        # geração em thread: OCR/processamento fora da main thread, tudo o que
+        # toca Tk volta marshallizado via after(0, ...)
+        import threading
+        t=threading.Thread(target=lambda: self.after(0, lambda: done(*run())), daemon=True)
+        t.start()
