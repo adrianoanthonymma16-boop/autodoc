@@ -54,7 +54,6 @@ class MapeamentoService:
         if placeholder not in self.state.mapeamento:
             return
         old = copy.deepcopy(self.state.mapeamento[placeholder])
-        old['documento_path']
         self.state.undo_stack.append({
             'action': 'remove',
             'placeholder': placeholder,
@@ -92,7 +91,6 @@ class MapeamentoService:
             old = copy.deepcopy(self.state.mapeamento.get(ph, {}))
             self.state.redo_stack.append({'action': 'add', 'placeholder': ph, 'old_data': old})
             if ph in self.state.mapeamento:
-                self.state.mapeamento[ph]['documento_path']
                 del self.state.mapeamento[ph]
                 # remove do lote também
                 for entry in list(self.state.lote_fontes):
