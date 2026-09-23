@@ -30,6 +30,15 @@ class ModeloView(ctk.CTkFrame):
     def refresh_view(self):
         self._refresh()
 
+    def rebuild_chrome(self):
+        """Reconstrói widgets estáticos (pós-toggle de tema), preservando a busca."""
+        q = self.search.get() if hasattr(self, "search") else ""
+        for w in self.winfo_children():
+            w.destroy()
+        self._build()
+        if q:
+            self.search.insert(0, q)
+
     def _build(self):
         c = get_colors()
         self.grid_columnconfigure(0, weight=1)
@@ -70,13 +79,13 @@ class ModeloView(ctk.CTkFrame):
         self.search.pack(fill="x", padx=16, pady=(0,8))
         self.search.bind("<KeyRelease>", lambda e: self._on_search_key())
 
-        self.ph_scroll = ctk.CTkScrollableFrame(self.ph_card, height=180, fg_color="transparent")
+        self.ph_scroll = ctk.CTkScrollableFrame(self.ph_card, height=180, fg_color=c["surface_elevated"])
         self.ph_scroll.pack(fill="both", expand=True, padx=8, pady=(0,8))
 
         # Modelos carregados tabela leve
         self.lote_card = card(self)
         # pack só quando há modelos
-        self.lote_scroll = ctk.CTkScrollableFrame(self.lote_card, height=110, fg_color="transparent")
+        self.lote_scroll = ctk.CTkScrollableFrame(self.lote_card, height=110, fg_color=c["surface_elevated"])
 
         # Ações de salvar
         self.save_row = ctk.CTkFrame(self, fg_color="transparent")
