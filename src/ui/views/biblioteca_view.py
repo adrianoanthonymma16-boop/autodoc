@@ -45,7 +45,7 @@ class BibliotecaView(ctk.CTkFrame):
 
         self.list_card = card(self)
         self.list_card.pack(fill="both", expand=True, padx=24, pady=12)
-        self.scroll = ctk.CTkScrollableFrame(self.list_card, fg_color="transparent")
+        self.scroll = ctk.CTkScrollableFrame(self.list_card, fg_color=c["surface_elevated"])
         self.scroll.pack(fill="both", expand=True, padx=8, pady=8)
 
         # header
@@ -76,6 +76,15 @@ class BibliotecaView(ctk.CTkFrame):
 
     def mark_dirty(self):
         self._dirty = True
+
+    def rebuild_chrome(self):
+        """Reconstrói widgets estáticos (pós-toggle de tema), preservando busca e seleção."""
+        q = self.search.get() if hasattr(self, "search") else ""
+        for w in self.winfo_children():
+            w.destroy()
+        self._build()
+        if q:
+            self.search.insert(0, q)
 
     def _refresh(self):
         """Rebuild total (botão Atualizar / seleção)."""
