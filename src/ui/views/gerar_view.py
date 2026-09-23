@@ -33,6 +33,18 @@ class GerarView(ctk.CTkFrame):
     def refresh_view(self):
         self._refresh_status()
 
+    def rebuild_chrome(self):
+        """Reconstrói widgets estáticos (pós-toggle), preservando preview e status."""
+        txt = self.text.get("1.0", "end-1c") if hasattr(self, "text") else ""
+        status = self.status.cget("text") if hasattr(self, "status") else ""
+        for w in self.winfo_children():
+            w.destroy()
+        self._build()
+        if txt:
+            self.text.insert("1.0", txt)
+        if status:
+            self.status.configure(text=status)
+
     def _build(self):
         c=get_colors()
         hdr=section_header(self, "Gerar Documento", "Extraia via OCR ou preencha manualmente, revise e gere o arquivo final", icon="spark")
