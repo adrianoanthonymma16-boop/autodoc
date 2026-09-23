@@ -32,6 +32,21 @@ class MapeamentoView(ctk.CTkFrame):
     def refresh_view(self):
         self._render_all()
 
+    def rebuild_chrome(self):
+        """Reconstrói widgets estáticos (pós-toggle), preservando imagem, retângulo e busca."""
+        img = self.canvas.imagem_original if self.canvas else None
+        pending = self._pending_rect
+        q = self.search_ph.get() if hasattr(self, "search_ph") else ""
+        for w in self.winfo_children():
+            w.destroy()
+        self.canvas = None
+        self._build()
+        self._pending_rect = pending
+        if q:
+            self.search_ph.insert(0, q)
+        if img is not None:
+            self.canvas.set_image(img)
+
     def _build(self):
         c = get_colors()
         hdr = section_header(self, "Mapear", "Selecione o placeholder e o documento, depois desenhe o retângulo no visualizador", icon="target")
@@ -73,13 +88,13 @@ class MapeamentoView(ctk.CTkFrame):
         self.search_ph.pack(fill="x", padx=10, pady=(0,6))
         self.search_ph.bind("<KeyRelease>", lambda e: self._on_search_key())
 
-        self.ph_scroll = ctk.CTkScrollableFrame(left, height=140, fg_color="transparent")
+        self.ph_scroll = ctk.CTkScrollableFrame(left, height=140, fg_color=c["surface_elevated"])
         self.ph_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
 
         right = card(dual)
         right.grid(row=0, column=1, sticky="nsew", padx=4)
         ctk.CTkLabel(right, text="Documentos", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(10,4))
-        self.doc_scroll = ctk.CTkScrollableFrame(right, height=140, fg_color="transparent")
+        self.doc_scroll = ctk.CTkScrollableFrame(right, height=140, fg_color=c["surface_elevated"])
         self.doc_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
 
         # Status selection
@@ -104,7 +119,7 @@ class MapeamentoView(ctk.CTkFrame):
         self.map_card = card(self)
         self.map_card.pack(fill="x", padx=24, pady=(0,12))
         ctk.CTkLabel(self.map_card, text="Mapeamentos", font=FONTS["caption"], text_color=c["text_muted"]).pack(anchor="w", padx=12, pady=(6,2))
-        self.map_scroll = ctk.CTkScrollableFrame(self.map_card, height=80, fg_color="transparent")
+        self.map_scroll = ctk.CTkScrollableFrame(self.map_card, height=80, fg_color=c["surface_elevated"])
         self.map_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
         self.lbl_status = ctk.CTkLabel(self, text="Aguardando modelo…", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_status.pack(fill="x", padx=20)
