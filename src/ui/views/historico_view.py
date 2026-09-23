@@ -32,7 +32,7 @@ class HistoricoView(ctk.CTkFrame):
                       command=self.refresh).pack(side="right")
         self.card = card(self)
         self.card.pack(fill="both", expand=True, padx=24, pady=12)
-        self.scroll = ctk.CTkScrollableFrame(self.card, fg_color="transparent")
+        self.scroll = ctk.CTkScrollableFrame(self.card, fg_color=c["surface_elevated"])
         self.scroll.pack(fill="both", expand=True, padx=8, pady=8)
         self.status = ctk.CTkLabel(self, text="", font=FONTS["caption"], text_color=c["text_muted"])
         self.status.pack(fill="x", padx=20, pady=(0, 10))
@@ -47,6 +47,12 @@ class HistoricoView(ctk.CTkFrame):
         """Rebuild total (botão Atualizar)."""
         self._sig = None
         self.refresh_view()
+
+    def rebuild_chrome(self):
+        """Reconstrói widgets estáticos (pós-toggle de tema)."""
+        for w in self.winfo_children():
+            w.destroy()
+        self._build()
 
     def refresh_view(self):
         """Rebuild barato: só reconstrói se dados mudaram ou tema trocou."""
