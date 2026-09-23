@@ -196,9 +196,12 @@ class Shell:
             self._nav_style(k, k == key)
         view.tkraise()
         self.current = key
-        # rebuild barato: só quando a view está dirty (tema) ou dados mudaram
-        # (limpa a flag DEPOIS: refresh_view decide pelo _dirty + assinatura)
+        # rebuild quando dirty (tema) ou dados mudaram: cromo estático
+        # primeiro (rebuild_chrome), depois listas (refresh_view decide
+        # pelo _dirty + assinatura). Flag limpa DEPOIS.
         if getattr(view, "_dirty", False):
+            if hasattr(view, "rebuild_chrome"):
+                view.rebuild_chrome()
             if hasattr(view, "refresh_view"):
                 view.refresh_view()
             view._dirty = False
@@ -298,6 +301,9 @@ class Shell:
             view._dirty = True
         if self.current and self.current in self.views:
             view = self.views[self.current]
+            # rebuild total da visível: cromo estático (_build) + listas
+            if hasattr(view, "rebuild_chrome"):
+                view.rebuild_chrome()
             if hasattr(view, "refresh_view"):
                 view.refresh_view()
             view._dirty = False
