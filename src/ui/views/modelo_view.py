@@ -1,12 +1,13 @@
 """
 ModeloView - aba Modelo com drag&drop, KPIs, lista de modelos carregados
 """
+import contextlib
 import os
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
-from ui.components.widgets import card, empty_state, kpi_card, pill, section_header
+from ui.components.widgets import card, empty_state, kpi_card, pill, scroll_frame, section_header
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_modelo
@@ -43,13 +44,20 @@ class ModeloView(ctk.CTkFrame):
         c = get_colors()
         self.grid_columnconfigure(0, weight=1)
 
+        # Ações de salvar reservadas no rodapé: nunca somem quando a lista cresce.
+        self.save_row = ctk.CTkFrame(self, fg_color="transparent")
+        self.save_row.pack(side="bottom", fill="x", padx=20, pady=(0, 10))
+        ctk.CTkButton(self.save_row, text="Salvar na Biblioteca", image=get_icon("save", 16, c["text_on_primary"]), compound="left", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], height=36).pack(side="left")
+        self.lbl_status = ctk.CTkLabel(self.save_row, text="Nenhum modelo carregado", font=FONTS["caption"], text_color=c["text_muted"])
+        self.lbl_status.pack(side="left", padx=12)
+
         # header
         hdr = section_header(self, "Modelos", "Carregue seus templates ODT/DOCX com placeholders {{campo}}", icon="doc")
-        hdr.pack(fill="x", padx=20, pady=(16,8))
+        hdr.pack(fill="x", padx=20, pady=(12,6))
 
         # KPIs (badge Dabang, ícones SVG)
         kpi_row = ctk.CTkFrame(self, fg_color="transparent")
-        kpi_row.pack(fill="x", padx=24, pady=8)
+        kpi_row.pack(fill="x", padx=24, pady=6)
         kpi_row.grid_columnconfigure((0,1,2), weight=1)
         self.kpi_modelos = kpi_card(kpi_row, "Modelos carregados", "0", "primary", icon="doc")
         self.kpi_modelos.grid(row=0, column=0, sticky="ew", padx=6)
@@ -60,11 +68,11 @@ class ModeloView(ctk.CTkFrame):
 
         # Drop zone + botões
         drop = card(self)
-        drop.pack(fill="x", padx=24, pady=10)
-        ctk.CTkLabel(drop, text="Arraste e solte aqui ou clique para selecionar", font=FONTS["body"], text_color=c["text_muted"]).pack(pady=(18,4))
+        drop.pack(fill="x", padx=24, pady=8)
+        ctk.CTkLabel(drop, text="Arraste e solte aqui ou clique para selecionar", font=FONTS["body"], text_color=c["text_muted"]).pack(pady=(14,4))
         ctk.CTkLabel(drop, text="ODT e DOCX • placeholders no formato {{nome_campo}}", font=FONTS["caption"], text_color=c["text_faint"]).pack()
         btn_row = ctk.CTkFrame(drop, fg_color="transparent")
-        btn_row.pack(pady=14)
+        btn_row.pack(pady=10)
         ctk.CTkButton(btn_row, text="Carregar Modelo", command=self._carregar, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], height=40, font=FONTS["h3"]).pack(side="left", padx=6)
         ctk.CTkButton(btn_row, text="Adicionar ao lote", image=get_icon("plus", 16, c["primary_hover"]), compound="left", command=self._adicionar_lote, corner_radius=12, fg_color=c["surface_hover"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], hover_color=c["primary_soft"], height=40).pack(side="left", padx=6)
         # drag drop bindings (tkdnd se disponível tenta)
@@ -72,35 +80,25 @@ class ModeloView(ctk.CTkFrame):
 
         # Placeholders grid
         self.ph_card = card(self)
-        self.ph_card.pack(fill="both", expand=True, padx=20, pady=10)
+        self.ph_card.pack(fill="both", expand=True, padx=20, pady=8)
         ctk.CTkLabel(self.ph_card, text="Placeholders", font=FONTS["h2"], text_color=c["text"]).pack(anchor="w", padx=16, pady=(12,4))
         # search
         self.search = ctk.CTkEntry(self.ph_card, placeholder_text="Buscar placeholder…", height=34, corner_radius=10, border_color=c["border"])
         self.search.pack(fill="x", padx=16, pady=(0,8))
         self.search.bind("<KeyRelease>", lambda e: self._on_search_key())
 
-        self.ph_scroll = ctk.CTkScrollableFrame(self.ph_card, height=180, fg_color=c["surface_elevated"])
+        self.ph_scroll = scroll_frame(self.ph_card, height=150)
         self.ph_scroll.pack(fill="both", expand=True, padx=8, pady=(0,8))
 
-        # Modelos carregados tabela leve
+        # Modelos carregados tabela leve (pack só quando há modelos)
         self.lote_card = card(self)
-        # pack só quando há modelos
-        self.lote_scroll = ctk.CTkScrollableFrame(self.lote_card, height=110, fg_color=c["surface_elevated"])
-
-        # Ações de salvar
-        self.save_row = ctk.CTkFrame(self, fg_color="transparent")
-        self.save_row.pack(fill="x", padx=20, pady=(0,10))
-        ctk.CTkButton(self.save_row, text="Salvar na Biblioteca", image=get_icon("save", 16, c["text_on_primary"]), compound="left", command=self._salvar_biblioteca, corner_radius=10, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], height=36).pack(side="left")
-        self.lbl_status = ctk.CTkLabel(self.save_row, text="Nenhum modelo carregado", font=FONTS["caption"], text_color=c["text_muted"])
-        self.lbl_status.pack(side="left", padx=12)
+        self.lote_scroll = scroll_frame(self.lote_card, height=90)
 
     def _on_search_key(self):
         # debounce: evita rebuild total a cada tecla
         if self._search_after is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self.after_cancel(self._search_after)
-            except Exception:
-                pass
         self._search_after = self.after(200, self._render_placeholders)
 
     def _on_state(self, ev):
@@ -130,7 +128,7 @@ class ModeloView(ctk.CTkFrame):
             w.destroy()
         filtro = self.search.get().strip().lower()
         if not self.state.placeholders:
-            empty_state(self.ph_scroll, "search", "Nenhum placeholder", "Carregue um modelo ODT/DOCX com {{campo}}.", button_text="Carregar Modelo", button_cmd=self._carregar).pack(pady=20)
+            empty_state(self.ph_scroll, "search", "Nenhum placeholder", "Carregue um modelo ODT/DOCX com {{campo}}.").pack(pady=8)
             return
         # grid de chips
         row = None
@@ -151,7 +149,7 @@ class ModeloView(ctk.CTkFrame):
                 self.lote_card.pack_forget()
             return
         if not self.lote_card.winfo_ismapped():
-            self.lote_card.pack(fill="x", padx=20, pady=(0,10))
+            self.lote_card.pack(side="bottom", fill="x", padx=20, pady=(0, 10))
             ctk.CTkLabel(self.lote_card, text="Lote de modelos", font=FONTS["h3"], text_color=c["text"]).pack(anchor="w", padx=16, pady=(10,4))
             self.lote_scroll.pack(fill="x", padx=8, pady=(0,8))
         for w in self.lote_scroll.winfo_children():
@@ -162,7 +160,7 @@ class ModeloView(ctk.CTkFrame):
             ctk.CTkLabel(r, text=os.path.basename(m['path']), font=FONTS["body_small"], width=220, anchor="w").pack(side="left", padx=6)
             pill(r, m['tipo'].upper(), "primary").pack(side="left", padx=4)
             ctk.CTkLabel(r, text=", ".join(m['placeholders'])[:60], font=FONTS["caption"], text_color=c["text_muted"], width=260, anchor="w").pack(side="left", padx=6)
-            ctk.CTkButton(r, text="", image=get_icon("x", 14, c["danger"]), width=28, height=24, corner_radius=8, fg_color=c["danger_soft"], hover_color=c["danger"], command=lambda idx=i: self.svc.remover_do_lote(idx)).pack(side="right", padx=4)
+            ctk.CTkButton(r, text="", image=get_icon("x", 14, c["danger"]), width=28, height=24, corner_radius=8, fg_color=c["danger_soft"], hover_color=c["danger_soft_hover"], command=lambda idx=i: self.svc.remover_do_lote(idx)).pack(side="right", padx=4)
 
     def _carregar(self):
         from mensagens import mostrar_info_modelos

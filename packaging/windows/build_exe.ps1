@@ -43,6 +43,7 @@ Remove-Item -Recurse -Force "dist\AutoDoc" -ErrorAction SilentlyContinue
     --paths "$Root\src" `
     --add-data "$Root\assets;assets" `
     --add-data "$Root\icon.png;." `
+    --hidden-import PIL._tkinter_finder `
     --collect-all customtkinter `
     --collect-all ttkbootstrap `
     --distpath "dist" `

@@ -47,6 +47,7 @@ rm -rf "$PYI_DIST" "$PYI_WORK" "$STAGE"
     --paths src \
     --add-data "$ROOT/assets:assets" \
     --add-data "$ROOT/icon.png:." \
+    --hidden-import PIL._tkinter_finder \
     --collect-all customtkinter \
     --collect-all ttkbootstrap \
     --distpath "$PYI_DIST" \

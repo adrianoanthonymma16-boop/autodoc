@@ -16,6 +16,7 @@ from services.mapeamento import MapeamentoService
 from services.modelo import ModeloService
 from ui.icons import get as get_icon
 from ui.theme import get_colors
+from ui.window_utils import clamp_geometry
 
 NAV_ITEMS = [
     ("Modelos", "doc", "modelos"),
@@ -121,40 +122,49 @@ class Shell:
         ctk.CTkLabel(mark, text="", image=get_icon("spark", 18, c["text_on_primary"])).pack(expand=True)
         texts = ctk.CTkFrame(row, fg_color="transparent")
         texts.pack(side="left", padx=10)
-        ctk.CTkLabel(texts, text="AutoDoc", font=("Inter", 17, "bold"), text_color=c["text"]).pack(anchor="w")
-        ctk.CTkLabel(texts, text=f"v{VERSAO} • Premium", font=("Inter", 10), text_color=c["text_faint"]).pack(anchor="w")
+        ctk.CTkLabel(texts, text="AutoDoc", font=("Inter", 17, "bold"),
+                     text_color=c["sidebar_text"]).pack(anchor="w")
+        ctk.CTkLabel(texts, text=f"v{VERSAO} • Premium", font=("Inter", 10),
+                     text_color=c["sidebar_text_faint"]).pack(anchor="w")
         self._logo_texts = texts
 
         # nav buttons — pill ativa estilo Dabang/Horizon, ícones SVG
         self.nav_btns = {}
         self.nav_icons = {}
         for label, icon, key in NAV_ITEMS:
-            btn = ctk.CTkButton(self.sidebar, text=label, image=get_icon(icon, 18, c["text_muted"]),
+            btn = ctk.CTkButton(self.sidebar, text=label,
+                                image=get_icon(icon, 20, c["sidebar_text_muted"]),
                                 compound="left", anchor="w",
                                 fg_color="transparent", hover_color=c["sidebar_hover"],
-                                text_color=c["text_muted"], corner_radius=12, height=40,
+                                text_color=c["sidebar_text_muted"], corner_radius=12, height=40,
                                 font=("Inter", 13), command=lambda k=key: self._switch(k))
             btn.pack(fill="x", padx=12, pady=3)
             self.nav_btns[key] = btn
             self.nav_icons[key] = icon
 
         # stepper progress minimal
-        self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso", font=("Inter", 10, "bold"), text_color=c["text_faint"])
+        self.step_label = ctk.CTkLabel(self.sidebar, text="Progresso",
+                                       font=("Inter", 10, "bold"),
+                                       text_color=c["sidebar_text_faint"])
         self.step_label.pack(anchor="w", padx=16, pady=(16, 4))
         self.step_bar = ctk.CTkProgressBar(self.sidebar, height=8, corner_radius=4, progress_color=c["primary"], fg_color=c["sidebar_hover"])
         self.step_bar.pack(fill="x", padx=16)
+        self._progress_ratio = 0.0
         self.step_bar.set(0)
 
         # bottom actions
         bottom = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         bottom.pack(side="bottom", fill="x", padx=10, pady=12)
-        self.btn_theme = ctk.CTkButton(bottom, text="Modo escuro", image=get_icon("moon", 16, c["text"]),
-                                       compound="left", height=32, corner_radius=10,
-                                       fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"],
-                                       command=self._toggle_theme)
+        self.btn_theme = ctk.CTkButton(
+            bottom, text="Modo escuro", image=get_icon("moon", 18, c["sidebar_text"]),
+            compound="left", height=32, corner_radius=10,
+            fg_color=c["sidebar_hover"], hover_color=c["sidebar_hover_strong"],
+            text_color=c["sidebar_text"], command=self._toggle_theme)
         self.btn_theme.pack(fill="x", pady=4)
-        ctk.CTkButton(bottom, text="Sobre", height=28, corner_radius=8, fg_color="transparent",
-                      text_color=c["text_faint"], hover_color=c["sidebar_hover"], command=self._sobre).pack(fill="x")
+        ctk.CTkButton(bottom, text="Sobre", height=28, corner_radius=8,
+                      fg_color="transparent", text_color=c["sidebar_text_faint"],
+                      hover_color=c["sidebar_hover"],
+                      command=self._sobre).pack(fill="x")
 
         # main area
         self.main = ctk.CTkFrame(self.root, fg_color=c["bg"], corner_radius=0)
@@ -165,15 +175,16 @@ class Shell:
         self.current = None
         self._switch("modelos")
         self.state.subscribe(self._on_state_progress)
+        self._on_state_progress("init")
 
     def _nav_style(self, key, active):
         c = get_colors()
         btn = self.nav_btns[key]
-        color = c["text_on_primary"] if active else c["text_muted"]
+        color = c["text_on_primary"] if active else c["sidebar_text_muted"]
         collapsed = bool(self._collapsed)
         label = "" if collapsed else dict((k, lbl) for lbl, _, k in NAV_ITEMS)[key]
         btn.configure(
-            image=get_icon(self.nav_icons[key], 18, color),
+            image=get_icon(self.nav_icons[key], 20, color),
             text=label,
             fg_color=c["primary"] if active else "transparent",
             text_color=color,
@@ -181,10 +192,15 @@ class Shell:
         )
 
     def _on_state_progress(self, ev):
-        if ev in ("mapeamento", "modelo", "modelos"):
+        if ev in ("init", "backup", "mapeamento", "modelo", "modelos"):
             total = len(self.state.placeholders)
             done = len(self.state.mapeamento)
-            self.step_bar.set(done / max(1, total))
+            self._progress_ratio = done / total if total else 0
+            c = get_colors()
+            self.step_bar.configure(
+                progress_color=c["primary"] if self._progress_ratio else c["sidebar_hover"]
+            )
+            self.step_bar.set(self._progress_ratio)
             if total > 0:
                 self.step_label.configure(text=f"{done}/{total} mapeados")
             else:
@@ -288,16 +304,20 @@ class Shell:
         dark = ctk.get_appearance_mode() == "Dark"
         self.sidebar.configure(fg_color=c["sidebar"])
         self.main.configure(fg_color=c["bg"])
-        self.step_bar.configure(progress_color=c["primary"], fg_color=c["sidebar_hover"])
-        self.step_label.configure(text_color=c["text_faint"])
-        self.btn_theme.configure(
-            image=get_icon("sun" if dark else "moon", 16, c["text"]),
-            text="Modo claro" if dark else "Modo escuro",
-            fg_color=c["sidebar_hover"], hover_color=c["border_strong"], text_color=c["text"],
+        self.step_bar.configure(
+            progress_color=c["primary"] if self._progress_ratio else c["sidebar_hover"],
+            fg_color=c["sidebar_hover"],
         )
-        for key, btn in self.nav_btns.items():
+        self.step_label.configure(text_color=c["sidebar_text_faint"])
+        self.btn_theme.configure(
+            image=get_icon("sun" if dark else "moon", 18, c["sidebar_text"]),
+            text="Modo claro" if dark else "Modo escuro",
+            fg_color=c["sidebar_hover"], hover_color=c["sidebar_hover_strong"],
+            text_color=c["sidebar_text"],
+        )
+        for key, _btn in self.nav_btns.items():
             self._nav_style(key, key == self.current)
-        for key, view in self.views.items():
+        for _key, view in self.views.items():
             view._dirty = True
         if self.current and self.current in self.views:
             view = self.views[self.current]
@@ -315,13 +335,23 @@ class Shell:
         dark = tema == "dark"
         c = get_colors()
         self.btn_theme.configure(
-            image=get_icon("sun" if dark else "moon", 16, c["text"]),
+            image=get_icon("sun" if dark else "moon", 18, c["sidebar_text"]),
             text="Modo claro" if dark else "Modo escuro",
         )
         geo = prefs.get('tamanho_janela_ctk')
         if geo:
-            with contextlib.suppress(BaseException):
-                self.root.geometry(geo)
+            try:
+                sw = self.root.winfo_vrootwidth()
+                sh = self.root.winfo_vrootheight()
+                sx = self.root.winfo_vrootx()
+                sy = self.root.winfo_vrooty()
+            except Exception:
+                sw = self.root.winfo_screenwidth()
+                sh = self.root.winfo_screenheight()
+                sx = sy = 0
+            safe = clamp_geometry(geo, sw, sh, sx, sy)
+            if safe:
+                self.root.geometry(safe)
 
     def _try_restore_backup(self):
         data = self.map_svc.restaurar_backup()

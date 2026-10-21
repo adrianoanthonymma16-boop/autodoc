@@ -1,6 +1,8 @@
 """
 Widgets reutilizáveis premium
 """
+import contextlib
+
 import customtkinter as ctk
 
 from ui.theme import FONTS, get_colors
@@ -20,16 +22,63 @@ def section_header(parent, title, subtitle=None, icon=None):
     c = get_colors()
     f = ctk.CTkFrame(parent, fg_color="transparent")
     row = ctk.CTkFrame(f, fg_color="transparent")
-    row.pack(anchor="w")
+    row.pack(anchor="w", fill="x")
     if icon and available(icon):
-        ctk.CTkLabel(row, text="", image=get(icon, 24, c["primary"]),
-                     width=28).pack(side="left", padx=(0, 8))
+        ctk.CTkLabel(row, text="", image=get(icon, 26, c["primary"]),
+                     width=30, height=30).pack(
+            side="left", anchor="n", padx=(0, 10), pady=(2, 0))
     tx = ctk.CTkFrame(row, fg_color="transparent")
-    tx.pack(side="left")
+    tx.pack(side="left", anchor="n")
     ctk.CTkLabel(tx, text=title, font=FONTS["display"], text_color=c["text"]).pack(anchor="w")
     if subtitle:
-        ctk.CTkLabel(tx, text=subtitle, font=FONTS["body"], text_color=c["text_muted"], wraplength=800, justify="left").pack(anchor="w", pady=(2,0))
+        sub = ctk.CTkLabel(tx, text=subtitle, font=FONTS["body"],
+                           text_color=c["text_muted"], wraplength=800,
+                           justify="left")
+        sub.pack(anchor="w", pady=(2, 0))
+
+        def _wrap(e, lbl=sub):
+            lbl.configure(wraplength=max(240, e.width - 70))
+
+        f.bind("<Configure>", _wrap)
     return f
+
+def table_columns(frame, specs):
+    """Configura colunas alinhadas de uma tabela.
+
+    specs = [(minsize, weight), ...]; peso 1 na coluna que deve expandir.
+    """
+    for i, (minsize, weight) in enumerate(specs):
+        frame.grid_columnconfigure(i, minsize=minsize, weight=weight)
+
+def _autohide_scrollbar(sf):
+    """Esconde a scrollbar quando o conteúdo cabe na viewport."""
+    def sync(_e=None):
+        with contextlib.suppress(Exception):
+            canvas = sf._parent_canvas
+            box = canvas.bbox("all")
+            need = bool(box) and (box[3] - box[1]) > canvas.winfo_height() + 2
+            if need:
+                sf._scrollbar.grid()
+            else:
+                sf._scrollbar.grid_remove()
+                canvas.yview_moveto(0)
+
+    sf.bind("<Configure>", sync, add="+")
+    sf._parent_canvas.bind("<Configure>", sync, add="+")
+    sf.after_idle(sync)
+
+def scroll_frame(parent, **kwargs):
+    """CTkScrollableFrame com scrollbar discreta e auto-oculta."""
+    c = get_colors()
+    kwargs.setdefault("fg_color", c["surface_elevated"])
+    kwargs.setdefault("scrollbar_fg_color", "transparent")
+    kwargs.setdefault("scrollbar_button_color", c["border"])
+    kwargs.setdefault("scrollbar_button_hover_color", c["border_strong"])
+    sf = ctk.CTkScrollableFrame(parent, **kwargs)
+    with contextlib.suppress(Exception):
+        sf._scrollbar.configure(width=10)
+    _autohide_scrollbar(sf)
+    return sf
 
 def kpi_card(parent, label, value, accent="primary", icon="doc"):
     """KPI estilo Dabang/Horizon: fundo tintado + badge circular com SVG + valor grande."""

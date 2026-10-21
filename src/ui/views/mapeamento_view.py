@@ -7,7 +7,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from ui.canvas.image_canvas import ImageCanvas
-from ui.components.widgets import card, section_header
+from ui.components.widgets import card, scroll_frame, section_header
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_anexo
@@ -65,8 +65,8 @@ class MapeamentoView(ctk.CTkFrame):
         tb = ctk.CTkFrame(self, fg_color="transparent")
         tb.pack(fill="x", padx=24, pady=6)
         ctk.CTkButton(tb, text="Anexar", image=get_icon("plus", 16, c["text_on_primary"]), compound="left", height=34, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=4)
-        ctk.CTkButton(tb, text="Limpar mapeamento", height=34, corner_radius=12, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning"], command=self._limpar).pack(side="left", padx=4)
-        ctk.CTkButton(tb, text="Remover doc", height=34, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover_doc).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Limpar mapeamento", height=34, corner_radius=12, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning_soft_hover"], command=self._limpar).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Remover doc", height=34, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger_soft_hover"], command=self._remover_doc).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Desfazer", image=get_icon("undo", 16, c["text"]), compound="left", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=3)
         ctk.CTkButton(tb, text="Exportar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._export).pack(side="right", padx=3)
         ctk.CTkButton(tb, text="Importar", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["primary"], text_color=c["primary_hover"], command=self._import).pack(side="right", padx=3)
@@ -88,13 +88,13 @@ class MapeamentoView(ctk.CTkFrame):
         self.search_ph.pack(fill="x", padx=10, pady=(0,6))
         self.search_ph.bind("<KeyRelease>", lambda e: self._on_search_key())
 
-        self.ph_scroll = ctk.CTkScrollableFrame(left, height=140, fg_color=c["surface_elevated"])
+        self.ph_scroll = scroll_frame(left, height=140)
         self.ph_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
 
         right = card(dual)
         right.grid(row=0, column=1, sticky="nsew", padx=4)
         ctk.CTkLabel(right, text="Documentos", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(10,4))
-        self.doc_scroll = ctk.CTkScrollableFrame(right, height=140, fg_color=c["surface_elevated"])
+        self.doc_scroll = scroll_frame(right, height=140)
         self.doc_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
 
         # Status selection
@@ -119,7 +119,7 @@ class MapeamentoView(ctk.CTkFrame):
         self.map_card = card(self)
         self.map_card.pack(fill="x", padx=24, pady=(0,12))
         ctk.CTkLabel(self.map_card, text="Mapeamentos", font=FONTS["caption"], text_color=c["text_muted"]).pack(anchor="w", padx=12, pady=(6,2))
-        self.map_scroll = ctk.CTkScrollableFrame(self.map_card, height=80, fg_color=c["surface_elevated"])
+        self.map_scroll = scroll_frame(self.map_card, height=80)
         self.map_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
         self.lbl_status = ctk.CTkLabel(self, text="Aguardando modelo…", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_status.pack(fill="x", padx=20)

@@ -7,12 +7,15 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from modelos_salvos import carregar_modelo, listar_modelos, remover_modelo
-from ui.components.widgets import card, empty_state, section_header
+from ui.components.widgets import card, empty_state, scroll_frame, section_header, table_columns
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 
 
 class BibliotecaView(ctk.CTkFrame):
+    # Modelo expande; metadados ficam alinhados à direita.
+    _COLS = ((280, 1), (80, 0), (80, 0), (110, 0))
+
     def __init__(self, parent, state, modelo_service, **kwargs):
         super().__init__(parent, fg_color="transparent", **kwargs)
         self.state = state
@@ -41,18 +44,22 @@ class BibliotecaView(ctk.CTkFrame):
                       text_color=c["text"], border_width=1, border_color=c["border"],
                       command=self._refresh).pack(side="left", padx=8)
         ctk.CTkButton(toolbar, text="Usar modelo", width=124, height=36, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], command=self._usar).pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Remover", width=96, height=36, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger"], command=self._remover).pack(side="right", padx=6)
+        ctk.CTkButton(toolbar, text="Remover", width=96, height=36, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger_soft_hover"], command=self._remover).pack(side="right", padx=6)
 
         self.list_card = card(self)
         self.list_card.pack(fill="both", expand=True, padx=24, pady=12)
-        self.scroll = ctk.CTkScrollableFrame(self.list_card, fg_color=c["surface_elevated"])
+        self.scroll = scroll_frame(self.list_card)
         self.scroll.pack(fill="both", expand=True, padx=8, pady=8)
 
-        # header
+        # header (grid alinhado com as linhas)
         self.header = ctk.CTkFrame(self.scroll, fg_color="transparent")
-        self.header.pack(fill="x", pady=(0, 6))
-        for txt, w in [("Modelo", 300), ("Tipo", 70), ("Campos", 70), ("Data", 110)]:
-            ctk.CTkLabel(self.header, text=txt, font=FONTS["caption"], text_color=c["text_muted"], width=w, anchor="w").pack(side="left", padx=6)
+        self.header.pack(fill="x", pady=(0, 2))
+        table_columns(self.header, self._COLS)
+        for col, txt in enumerate(("Modelo", "Tipo", "Campos", "Data")):
+            ctk.CTkLabel(self.header, text=txt, font=FONTS["caption"],
+                         text_color=c["text_muted"],
+                         anchor="w").grid(row=0, column=col, sticky="w", padx=8)
+        ctk.CTkFrame(self.scroll, height=1, fg_color=c["border"]).pack(fill="x", pady=(0, 4))
 
         self.rows_frame = ctk.CTkFrame(self.scroll, fg_color="transparent")
         self.rows_frame.pack(fill="both", expand=True)
@@ -126,9 +133,11 @@ class BibliotecaView(ctk.CTkFrame):
             tipo = m.get('tipo', '-').upper()
             n = str(len(m.get('placeholders', [])))
             data = m.get('data_adicao', '')[:10]
-            for txt, w in [(nome, 300), (tipo, 70), (n, 70), (data, 110)]:
-                lbl = ctk.CTkLabel(r, text=txt, font=FONTS["body_small"], width=w, anchor="w", text_color=c["text"])
-                lbl.pack(side="left", padx=6, pady=8)
+            table_columns(r, self._COLS)
+            for col, txt in enumerate((nome, tipo, n, data)):
+                lbl = ctk.CTkLabel(r, text=txt, font=FONTS["body_small"],
+                                   anchor="w", text_color=c["text"])
+                lbl.grid(row=0, column=col, sticky="w", padx=8, pady=8)
                 lbl.bind("<Button-1>", lambda e, mid=m['id'], fr=r: self._select(mid, fr))
             self._rows.append((m['id'], r))
 

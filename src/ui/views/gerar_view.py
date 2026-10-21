@@ -10,7 +10,7 @@ import customtkinter as ctk
 from historico import adicionar_ao_historico
 from logger import log_erro, log_info
 from preferencias import carregar_preferencias, set_preferencia
-from ui.components.widgets import card, section_header
+from ui.components.widgets import card, scroll_frame, section_header
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores_extra import sugerir_validacao, validar_campo
@@ -140,7 +140,7 @@ class GerarView(ctk.CTkFrame):
         win.transient(self.winfo_toplevel()); win.grab_set()
         ctk.CTkLabel(win, text="Revise e corrija", font=FONTS["h1"]).pack(pady=(12,2))
         ctk.CTkLabel(win, text="Correções se aplicam a todas as ocorrências do campo", font=FONTS["caption"], text_color=c["text_muted"]).pack()
-        scroll=ctk.CTkScrollableFrame(win, height=420)
+        scroll=scroll_frame(win, height=420)
         scroll.pack(fill="both", expand=True, padx=16, pady=10)
         entries={}
         for ph, val in dados_temp.items():

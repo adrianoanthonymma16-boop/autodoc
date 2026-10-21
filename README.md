@@ -109,9 +109,9 @@ python3 run_ctk.py
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.0_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.1_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.0_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.1_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -129,7 +129,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.0_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.1_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -426,13 +426,13 @@ python3 run_ctk.py
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.0_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.1_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.0_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.1_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
