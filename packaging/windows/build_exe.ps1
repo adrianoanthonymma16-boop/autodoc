@@ -39,10 +39,10 @@ Remove-Item -Recurse -Force "dist\AutoDoc" -ErrorAction SilentlyContinue
 & $Python -m PyInstaller `
     --noconfirm --clean --onedir --windowed `
     --name "AutoDoc" `
-    --icon "icon.ico" `
-    --paths "src" `
-    --add-data "assets;assets" `
-    --add-data "icon.png;." `
+    --icon "$Root\icon.ico" `
+    --paths "$Root\src" `
+    --add-data "$Root\assets;assets" `
+    --add-data "$Root\icon.png;." `
     --collect-all customtkinter `
     --collect-all ttkbootstrap `
     --distpath "dist" `
@@ -50,8 +50,16 @@ Remove-Item -Recurse -Force "dist\AutoDoc" -ErrorAction SilentlyContinue
     --specpath "build" `
     "run_ctk.py"
 
+if ($LASTEXITCODE -ne 0) {
+    throw "PyInstaller falhou (codigo $LASTEXITCODE)."
+}
+
 $Dist = Join-Path $Root "dist\AutoDoc"
 $Internal = Join-Path $Dist "_internal"
+
+if (-not (Test-Path (Join-Path $Dist "AutoDoc.exe"))) {
+    throw "PyInstaller nao gerou dist\AutoDoc\AutoDoc.exe."
+}
 
 Write-Host "==> [3/6] Embutindo Tesseract + idioma portugues"
 $TessSrc = Join-Path ${env:ProgramFiles} "Tesseract-OCR"
