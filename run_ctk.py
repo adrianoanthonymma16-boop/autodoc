@@ -17,11 +17,14 @@ def _show_error(msg):
         r.destroy()
     except Exception:
         print(msg, file=sys.stderr)
-    try:
-        import subprocess
-        subprocess.run(["zenity","--error", f"--text={msg}", "--title=AutoDoc Erro"], check=False)
-    except Exception:
-        pass
+    if sys.platform.startswith("linux"):
+        try:
+            import shutil
+            import subprocess
+            if shutil.which("zenity"):
+                subprocess.run(["zenity","--error", f"--text={msg}", "--title=AutoDoc Erro"], check=False)
+        except Exception:
+            pass
 
 try:
     import customtkinter as ctk
@@ -43,11 +46,16 @@ except Exception as e:
     except: pass
 
 if __name__ == "__main__":
+    try:
+        from ui.fonts import register_bundled_fonts
+        register_bundled_fonts()
+    except Exception:
+        pass
     if NEW_SHELL:
         try:
             from ui.scaling import apply_hidpi_scaling
             apply_hidpi_scaling()
-            root = ctk.CTk()
+            root = ctk.CTk(className="AutoDoc")
             app = Shell(root)
             root.mainloop()
         except Exception as e:
@@ -60,7 +68,7 @@ if __name__ == "__main__":
             # fallback silencioso para legada, sem popup assustador
             try:
                 from interface_ctk import AppDocumentosCTK
-                root = ctk.CTk()
+                root = ctk.CTk(className="AutoDoc")
                 app = AppDocumentosCTK(root)
                 root.mainloop()
             except Exception as e2:
@@ -76,6 +84,6 @@ if __name__ == "__main__":
         from interface_ctk import AppDocumentosCTK
         from ui.scaling import apply_hidpi_scaling
         apply_hidpi_scaling()
-        root = ctk.CTk()
+        root = ctk.CTk(className="AutoDoc")
         app = AppDocumentosCTK(root)
         root.mainloop()

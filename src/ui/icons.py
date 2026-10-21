@@ -16,9 +16,10 @@ em ``CTkImage`` com cache por (nome, tamanho, cor).
 import math
 import re
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
-ICON_DIR = Path(__file__).resolve().parent.parent.parent / "assets" / "icons"
+from resources import asset_path
+
+ICON_DIR = asset_path("icons")
 
 ICONS = (
     "doc", "library", "target", "spark", "clock",

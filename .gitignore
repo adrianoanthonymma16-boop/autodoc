@@ -3,3 +3,8 @@ __pycache__/
 *.pyo
 *.run
 .project_memory.json
+build/
+dist/
+.venv-build/
+icon.ico
+assets/fonts/Inter.ttf

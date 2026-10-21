@@ -3,12 +3,27 @@ Módulo de OCR (Optical Character Recognition)
 Responsável por pré-processar imagens e extrair texto usando Tesseract
 """
 
+import sys
+
 import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 
 from config import OCR_CLIPLIMIT, OCR_RESIZE_FATOR, OCR_TILE_GRID, TESSERACT_CONFIG, TESSERACT_LANG
+from resources import resource_path
+
+
+def _configurar_tesseract():
+    """Usa o Tesseract embutido no instalador Windows, quando existir."""
+    if sys.platform != "win32":
+        return
+    bundled = resource_path("tesseract", "tesseract.exe")
+    if bundled.is_file():
+        pytesseract.pytesseract.tesseract_cmd = str(bundled)
+
+
+_configurar_tesseract()
 
 
 def preprocessar_imagem(imagem_pil):

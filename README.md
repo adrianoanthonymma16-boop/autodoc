@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://ubuntu.com/)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
 Automatize o preenchimento de documentos ODT/DOCX usando OCR — **v4.0-premium modular** com interface premium responsiva, arquitetura desacoplada e 16 bugs corrigidos.
@@ -101,33 +101,64 @@ python3 run_ctk.py
 
 ---
 
-## Gerar Instalador
+## Instalação
+
+> Baixe os instaladores na página [Releases](https://github.com/adrianoanthonymma16-boop/autodoc/releases/latest).
+> Os pacotes já incluem o runtime Python — não é preciso instalar Python nem dependências.
+
+### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# Versão ttkbootstrap (original)
-bash build_installer.sh
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.0_amd64.deb)
+# 2. Instale com apt para resolver as dependências do Tesseract:
+sudo apt install ./autodoc-ctk_4.0.0_amd64.deb
 
-# Versão CustomTkinter (moderna)
-bash build_installer_ctk.sh
+# 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
+autodoc-ctk
 ```
 
-Gera arquivos `.run` autoextraíveis para cada interface.
+O pacote instala em `/opt/autodoc-ctk`, cria o atalho no menu, e declara
+`tesseract-ocr` + `tesseract-ocr-por` como dependências. Se quiser a fonte
+da interface, instale também `fonts-inter` (recomendado).
 
----
-
-## Instalar
+Para remover:
 
 ```bash
-# ttkbootstrap
-chmod +x AutoDoc-*.run
-./AutoDoc-*.run
+sudo apt remove autodoc-ctk
+```
 
-# CustomTkinter
+### Windows 10/11 (64 bits) — instalador `.exe`
+
+1. Baixe `autodoc-ctk_4.0.0_win64_setup.exe` na release.
+2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
+3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
+4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
+
+O Tesseract (com o idioma português), a fonte Inter e todas as bibliotecas
+Python já vão embutidos no instalador.
+
+### Compilar os instaladores
+
+```bash
+# Linux (.deb) — requer Python com requirements.txt, PyInstaller e dpkg-deb
+./packaging/build_deb.sh
+# saída: dist/autodoc-ctk_<versao>_amd64.deb
+
+# Windows (.exe) — executar no Windows, com Inno Setup 6 e Tesseract instalados
+powershell -ExecutionPolicy Bypass -File packaging/windows/build_exe.ps1
+# saída: dist/autodoc-ctk_<versao>_win64_setup.exe
+```
+
+As releases são geradas automaticamente pelo workflow `.github/workflows/release.yml`
+ao publicar uma tag `v*` (ex.: `git tag v4.0.0 && git push origin v4.0.0`).
+
+### Instalador legado `.run` (v3.x)
+
+```bash
+bash build_installer_ctk.sh   # gera AutoDocCTk-*.run
 chmod +x AutoDocCTk-*.run
 ./AutoDocCTk-*.run
 ```
-
-Ambas as versões podem coexistir na mesma máquina — são instaladas em diretórios separados.
 
 ---
 
@@ -288,7 +319,7 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 [![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://ubuntu.com/)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
 Automate ODT/DOCX document filling using OCR with two available interfaces: ttkbootstrap (lightweight) and CustomTkinter (modern).
@@ -387,21 +418,29 @@ python3 run_ctk.py
 
 ---
 
-## Build Installer
-
-```bash
-bash build_installer.sh
-```
-
-Generates a self-extracting `.run` file.
-
----
-
 ## Install
 
+> Download the installers from [Releases](https://github.com/adrianoanthonymma16-boop/autodoc/releases/latest).
+> They bundle the Python runtime — no Python or pip install needed.
+
+### Linux — `.deb` (Ubuntu/Debian)
+
 ```bash
-chmod +x AutoDoc-*.run
-./AutoDoc-*.run
+sudo apt install ./autodoc-ctk_4.0.0_amd64.deb
+autodoc-ctk
+```
+
+### Windows 10/11 (64-bit) — `.exe`
+
+1. Download `autodoc-ctk_4.0.0_win64_setup.exe`.
+2. Run the wizard (optionally create a desktop shortcut).
+3. If SmartScreen warns, choose **More info → Run anyway**.
+
+### Build the installers
+
+```bash
+./packaging/build_deb.sh                                  # Linux
+powershell -File packaging/windows/build_exe.ps1          # Windows
 ```
 
 ---
