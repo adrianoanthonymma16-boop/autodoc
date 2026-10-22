@@ -3,7 +3,7 @@ title: AutoDoc
 icon: assets/brand/autodoc-icon.svg
 base: core24
 version: "4.0.2"
-summary: "AutoDoc: preenchimento automático de modelos ODT/DOCX com OCR e lote por planilha"
+summary: "AutoDoc: preenchimento automático de modelos ODT/DOCX com OCR"
 description: |
   # AutoDoc
 
@@ -126,6 +126,9 @@ parts:
         --hidden-import PIL._tkinter_finder \
         --collect-all customtkinter \
         --collect-all ttkbootstrap \
+        --collect-all openpyxl \
+        --collect-all pypdfium2 \
+        --add-data "packaging/pyinstaller-docx-parts.keep:docx/parts" \
         --distpath "$CRAFT_PART_INSTALL" \
         --workpath "$CRAFT_PART_BUILD/pyi-work" \
         --specpath "$CRAFT_PART_BUILD" \
