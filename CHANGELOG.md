@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.3] - 2026-10-22
+
+### Added
+- **Seleção visual em janela própria** — o documento inteiro é exibido para escolher a área, com OCR do recorte e confirmação/edição do valor antes de salvar
+- **Salvar e próximo campo** — percorre os campos pendentes do mesmo documento sem reabrir a janela, mantendo os retângulos já confirmados como referência e mostrando um resumo ao final
+- **Lista de mapeamentos clicável** — mostra campo, documento e valor confirmado; clicar na linha reabre a seleção para remapear
+
+### Changed
+- A aba Mapear perdeu o canvas de seleção do rodapé; a seleção acontece só na janela e a lista de mapeamentos ocupa a área principal
+- Duplo clique em um documento abre direto a janela de seleção para o campo escolhido
+
 ## [4.0.2] - 2026-10-22
 
 ### Added

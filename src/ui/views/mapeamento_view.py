@@ -1,12 +1,14 @@
 """
-MapeamentoView - placeholder list + documento list + canvas moderno
+MapeamentoView - campos, documentos e mapeamentos confirmados.
+
+A seleção da área acontece em janela própria (RegionWindow); a lista de
+mapeamentos é a área principal e permite remapear com um clique.
 """
 import os
 
 import customtkinter as ctk
 
 from ui import messagebox
-from ui.canvas.image_canvas import ImageCanvas
 from ui.components.widgets import card, scroll_frame, section_header
 from ui.file_dialog import escolher_arquivo, salvar_arquivo
 from ui.icons import get as get_icon
@@ -15,13 +17,23 @@ from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_anexo
 
 
+def sequencia_pendente(placeholders, mapeamento, atual):
+    """Campos a percorrer no documento atual: o atual primeiro, depois os
+    ainda sem mapeamento, na ordem do modelo."""
+    pendentes = [ph for ph in placeholders if ph not in mapeamento]
+    if atual in pendentes:
+        pendentes.remove(atual)
+    if not atual:
+        return pendentes
+    return [atual, *pendentes]
+
+
 class MapeamentoView(ctk.CTkFrame):
     def __init__(self, parent, state, doc_service, map_service, **kwargs):
         super().__init__(parent, fg_color="transparent", **kwargs)
         self.state = state
         self.doc_svc = doc_service
         self.map_svc = map_service
-        self.canvas = None
         self._dirty = True
         self._search_after = None
         self._build()
@@ -35,21 +47,17 @@ class MapeamentoView(ctk.CTkFrame):
         self._render_all()
 
     def rebuild_chrome(self):
-        """Reconstrói widgets estáticos (pós-toggle), preservando imagem, retângulo e busca."""
-        img = self.canvas.imagem_original if self.canvas else None
+        """Reconstrói widgets estáticos (pós-toggle), preservando a busca."""
         q = self.search_ph.get() if hasattr(self, "search_ph") else ""
         for w in self.winfo_children():
             w.destroy()
-        self.canvas = None
         self._build()
         if q:
             self.search_ph.insert(0, q)
-        if img is not None:
-            self.canvas.set_image(img)
 
     def _build(self):
         c = get_colors()
-        hdr = section_header(self, "Mapear", "Selecione o placeholder e o documento, depois desenhe o retângulo no visualizador", icon="target")
+        hdr = section_header(self, "Mapear", "Escolha o campo e o documento e abra a janela de seleção da área", icon="target")
         hdr.pack(fill="x", padx=24, pady=(14,6))
 
         # Step indicator + progress
@@ -65,6 +73,7 @@ class MapeamentoView(ctk.CTkFrame):
         tb = ctk.CTkFrame(self, fg_color="transparent")
         tb.pack(fill="x", padx=24, pady=6)
         ctk.CTkButton(tb, text="Anexar", image=get_icon("plus", 16, c["text_on_primary"]), compound="left", height=34, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], command=self._anexar).pack(side="left", padx=4)
+        ctk.CTkButton(tb, text="Selecionar área", image=get_icon("target", 16, c["text_on_primary"]), compound="left", height=34, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], command=self._abrir_selecao).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Limpar mapeamento", height=34, corner_radius=12, fg_color=c["warning_soft"], text_color=c["warning"], hover_color=c["warning_soft_hover"], command=self._limpar).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Remover doc", height=34, corner_radius=12, fg_color=c["danger_soft"], text_color=c["danger"], hover_color=c["danger_soft_hover"], command=self._remover_doc).pack(side="left", padx=4)
         ctk.CTkButton(tb, text="Desfazer", image=get_icon("undo", 16, c["text"]), compound="left", height=32, corner_radius=12, fg_color="transparent", border_width=1, border_color=c["border"], text_color=c["text"], command=self._undo).pack(side="right", padx=3)
@@ -105,21 +114,16 @@ class MapeamentoView(ctk.CTkFrame):
         self.lbl_doc_sel = ctk.CTkLabel(status, text="Documento: —", font=FONTS["body_small"], text_color=c["success_hover"])
         self.lbl_doc_sel.pack(side="right")
 
-        # Canvas
-        self.canvas_card = card(self)
-        self.canvas_card.pack(fill="both", expand=True, padx=20, pady=6)
-        self.canvas = ImageCanvas(self.canvas_card, permitir_selecao=False, fg_color="transparent")
-        self.canvas.pack(fill="both", expand=True, padx=8, pady=8)
-
-        # Mapeamentos + salvar
-        bottom = ctk.CTkFrame(self, fg_color="transparent")
-        bottom.pack(fill="x", padx=24, pady=(0,6))
-        ctk.CTkButton(bottom, text="SELECIONAR ÁREA NO DOCUMENTO", image=get_icon("target", 18, c["text_on_primary"]), compound="left", height=44, corner_radius=12, fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"], font=("Inter", 13, "bold"), command=self._abrir_selecao).pack(fill="x")
-
+        # Mapeamentos (área principal)
         self.map_card = card(self)
-        self.map_card.pack(fill="x", padx=24, pady=(0,12))
-        ctk.CTkLabel(self.map_card, text="Mapeamentos", font=FONTS["caption"], text_color=c["text_muted"]).pack(anchor="w", padx=12, pady=(6,2))
-        self.map_scroll = scroll_frame(self.map_card, height=80)
+        self.map_card.pack(fill="both", expand=True, padx=24, pady=(6,12))
+        ctk.CTkLabel(self.map_card, text="Mapeamentos", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(10,0))
+        ctk.CTkLabel(
+            self.map_card,
+            text="Clique em uma linha para remapear o campo no documento.",
+            font=FONTS["caption"], text_color=c["text_muted"],
+        ).pack(anchor="w", padx=12, pady=(0,6))
+        self.map_scroll = scroll_frame(self.map_card)
         self.map_scroll.pack(fill="both", expand=True, padx=6, pady=(0,6))
         self.lbl_status = ctk.CTkLabel(self, text="Aguardando modelo…", font=FONTS["caption"], text_color=c["text_muted"])
         self.lbl_status.pack(fill="x", padx=20)
@@ -148,7 +152,6 @@ class MapeamentoView(ctk.CTkFrame):
         self._render_ph()
         self._render_docs()
         self._render_map_list()
-        self._update_canvas()
         # status labels
         if self.state.placeholder_atual:
             self.lbl_ph_sel.configure(text=f"Campo: {self.state.placeholder_atual}")
@@ -188,9 +191,6 @@ class MapeamentoView(ctk.CTkFrame):
     def _select_ph(self, ph):
         self.state.placeholder_atual=ph
         self._render_all()
-        # se já tem doc selecionado, mostra canvas
-        if self.state.documento_atual_path:
-            self._load_image()
 
     def _render_docs(self):
         c=get_colors()
@@ -209,39 +209,18 @@ class MapeamentoView(ctk.CTkFrame):
             ctk.CTkLabel(row, text="", image=get_icon(iname, 16, icolor)).pack(side="left", padx=(10, 2), pady=6)
             lbl=ctk.CTkLabel(row, text=doc['nome'], font=FONTS["body_small"], text_color=c["success"] if sel else c["text"], anchor="w")
             lbl.pack(side="left", padx=(2, 10), pady=6)
-            lbl.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
-            row.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
+            for alvo in (row, lbl):
+                alvo.bind("<Button-1>", lambda e, d=doc: self._select_doc(d))
+                alvo.bind("<Double-Button-1>", lambda e, d=doc: self._abrir_doc(d))
 
     def _select_doc(self, doc):
         self.state.documento_atual_path=doc['caminho']
         self.state.documento_tipo=doc['tipo']
-        # precisa carregar imagem no canvas
-        self._load_image()
         self._render_all()
 
-    def _load_image(self):
-        if not self.state.documento_atual_path:
-            return
-        # acha doc
-        for d in self.state.documentos_anexados:
-            if d['caminho']==self.state.documento_atual_path:
-                self.canvas.set_image(d['imagem_original'])
-                break
-        self._update_canvas()
-        self.canvas.after(80, self.canvas.fit_to_view)
-
-    def _update_canvas(self):
-        if not self.canvas.imagem_original:
-            return
-        # fonte única de verdade: state.mapeamento — o lote é um subproduto
-        # sincronizado via MapeamentoService._sync_lote
-        rects=[]
-        for ph, dados in self.state.mapeamento.items():
-            if dados['documento_path']==self.state.documento_atual_path:
-                rects.append({'x1':dados['x1'],'y1':dados['y1'],'x2':dados['x2'],'y2':dados['y2'],'label':ph})
-        def overlay(cv):
-            cv.draw_rects(rects)
-        self.canvas.set_overlays([overlay])
+    def _abrir_doc(self, doc):
+        self._select_doc(doc)
+        self._abrir_selecao()
 
     # --- ações ---
     def _anexar(self):
@@ -265,7 +244,8 @@ class MapeamentoView(ctk.CTkFrame):
             # auto seleciona se primeiro
             if not self.state.documento_atual_path:
                 self.state.documento_atual_path=caminho
-                self._load_image()
+                self.state.documento_tipo=self.state.documentos_anexados[-1]['tipo']
+                self._render_all()
 
     def _abrir_selecao(self):
         ph = self.state.placeholder_atual
@@ -283,13 +263,21 @@ class MapeamentoView(ctk.CTkFrame):
         if doc is None:
             messagebox.showwarning("Aviso","Documento não encontrado")
             return
+        refs = [
+            {'x1': d['x1'], 'y1': d['y1'], 'x2': d['x2'], 'y2': d['y2'], 'label': p}
+            for p, d in self.state.mapeamento.items()
+            if d['documento_path'] == doc['caminho']
+        ]
         RegionWindow(
             self,
             imagem=doc['imagem_original'],
-            placeholder=ph,
+            placeholders=sequencia_pendente(
+                self.state.placeholders, self.state.mapeamento, ph
+            ),
             documento_nome=doc['nome'],
-            on_confirm=lambda rect, valor, conf: self._salvar_regiao(
-                ph, doc, rect, valor, conf
+            retangulos=refs,
+            on_confirm=lambda ph2, rect, valor, conf: self._salvar_regiao(
+                ph2, doc, rect, valor, conf
             ),
         )
 
@@ -360,5 +348,16 @@ class MapeamentoView(ctk.CTkFrame):
                 resumo = valor if len(valor) <= 32 else valor[:29] + "…"
                 ctk.CTkLabel(row, text=f"· {resumo}", font=FONTS["caption"], text_color=c["success_hover"]).pack(side="left", padx=(8, 0))
             ctk.CTkButton(row, text="", image=get_icon("x", 12, c["danger"]), width=24, height=20, corner_radius=6, fg_color="transparent", hover_color=c["danger_soft"], command=lambda p=ph: self.map_svc.remover_placeholder(p)).pack(side="right", padx=6)
+            for alvo in row.winfo_children():
+                if isinstance(alvo, ctk.CTkLabel):
+                    alvo.bind("<Button-1>", lambda e, p=ph, d=dados: self._remapear(p, d))
+            row.bind("<Button-1>", lambda e, p=ph, d=dados: self._remapear(p, d))
         if self.state.lote_fontes:
             ctk.CTkLabel(self.map_scroll, text=f"LOTE: {len(self.state.lote_fontes)} doc(s)", font=FONTS["caption"], text_color=c["primary"]).pack(anchor="w", pady=(6,2), padx=6)
+
+    def _remapear(self, ph, dados):
+        self.state.placeholder_atual = ph
+        self.state.documento_atual_path = dados['documento_path']
+        self.state.documento_tipo = dados['documento_tipo']
+        self._render_all()
+        self._abrir_selecao()
