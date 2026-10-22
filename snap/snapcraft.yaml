@@ -3,11 +3,11 @@ title: AutoDoc
 icon: assets/brand/autodoc-icon.svg
 base: core24
 version: "4.0.2"
-summary: "AutoDoc: preenchimento automático de modelos ODT/DOCX com OCR"
+summary: "AutoDoc: preencha modelos ODT/DOCX por OCR, planilha ou digitação"
 description: |
   # AutoDoc
 
-  O AutoDoc ajuda você a preencher documentos automaticamente a partir de modelos ODT e DOCX. Você cria um modelo com campos marcados, preenche os valores e o aplicativo gera o documento final, pronto para salvar ou imprimir. Tudo processa no seu computador; nenhum documento é enviado para a nuvem.
+  O AutoDoc ajuda você a preencher documentos automaticamente a partir de modelos ODT e DOCX. Você pode digitar os valores, extrair de uma imagem com OCR ou preencher um documento por linha de uma planilha. O aplicativo gera os documentos finais, prontos para salvar ou imprimir. Tudo processa no seu computador; nenhum documento é enviado para a nuvem.
 
   ## Para quem é
   Para quem precisa preencher contratos, termos, aditivos, declarações ou outros documentos repetitivos sem digitar tudo do zero a cada vez.
@@ -29,8 +29,11 @@ description: |
   5. **Gere o documento**  
      Na aba **Gerar**, revise os valores extraídos ou preenchidos, corrija se necessário e clique em **Gerar**. O documento preenchido é criado e pode ser salvo.
 
-  6. **Reutilize modelos**  
-     Clique em **Salvar na Biblioteca** para guardar o modelo e usá-lo depois sem carregar o arquivo novamente. O histórico de documentos gerados fica na aba **Histórico**.
+  6. **Gere em lote a partir de uma planilha**  
+     Na aba **Lote**, escolha um arquivo XLSX, CSV ou TSV. O AutoDoc lê as colunas e sugere qual campo de cada coluna corresponde a cada placeholder. Ajuste o mapeamento e clique em **Gerar lote** para criar um documento por linha, com relatório de sucesso e erro.
+
+  7. **Reutilize modelos e dados**  
+     Clique em **Salvar na Biblioteca** para guardar o modelo e usá-lo depois sem carregar o arquivo novamente. Use **Fichas** para salvar conjuntos de valores (cliente, contrato) e reaplicá-los com um clique. O histórico de documentos gerados fica na aba **Histórico**.
 
   ## Regra dos placeholders
   - Escreva sempre entre chaves duplas: `{{campo}}`
@@ -38,11 +41,15 @@ description: |
   - Cada placeholder deve ter um valor preenchido antes de gerar o documento
   - O nome no documento deve ser exatamente o mesmo usado no aplicativo
 
+  ## Saída e pré-visualização
+  Defina uma pasta padrão, um padrão de nome de arquivo e, se quiser, uma subpasta por data. Antes de abrir, o AutoDoc pode gerar uma pré-visualização do documento. Cada campo extraído por OCR mostra a confiança da leitura, para você revisar os duvidosos.
+
   ## Extrair da imagem ou digitar manualmente
   Você tem duas formas de preencher: digitar o valor de cada campo manualmente no aplicativo ou extrair automaticamente de uma imagem/documento digitalizado com OCR. Quando usar OCR, sempre revise os textos extraídos antes de gerar, pois leituras de imagem podem conter erros.
 
   ## Dicas
   - Use temas claro ou escuro na parte inferior da barra lateral.
+  - Para lotes, a primeira linha da planilha deve conter os nomes das colunas.
   - Valide CPF, data e e-mail quando o modelo solicitar.
   - Quanto mais nítida a imagem para OCR, melhor o resultado.
 grade: stable
