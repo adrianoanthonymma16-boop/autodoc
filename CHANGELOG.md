@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.2] - 2026-10-22
+
+### Added
+- **Lote por planilha** — aba Lote lê XLSX/CSV/TSV, sugere o mapeamento das colunas e gera um documento por linha, com relatório de erros
+- **Fichas de dados** — salve conjuntos de valores e reaplique na revisão ou no preenchimento manual
+- **Saída organizada** — pasta padrão, padrão de nome (`{modelo}`, `{indice}`, `{data}`) e subpasta por data
+- **Pré-visualização** — converte o documento gerado em imagem (LibreOffice + PDF) antes de abrir
+- **Confiança de OCR** — cada campo mostra a confiança da leitura e destaca os duvidosos
+- **Seletor de arquivos próprio** — no tema do app, com locais rápidos, filtros e arquivos com "." ocultos
+- **Avisos e confirmações próprios** — diálogos tematizados no lugar dos messageboxes do Tk
+- **Snap** — pacote publicado na Snap Store
+
+### Fixed
+- DOCX no binário empacotado falhava ao abrir modelos sem cabeçalho/rodapé (`default-header.xml`)
+- Rolagem do preenchimento manual não funcionava sobre os campos de texto
+- Aba Lote com mapeamento em duas colunas e ações sempre visíveis
+- Barra de rolagem invisível em painéis escuros
+- Geração e extração não travam mais a interface (threads com retorno para a UI)
+
 ## [3.9.0] - 2026-07-14
 
 ### Added

@@ -91,7 +91,7 @@
     "docs": ["docs/teste.png — Imagem de teste manual para OCR"],
     "instalacao": {
       "tkinter": {"dir": "/home/tony/autodoc", "desktop": "autodoc.desktop", "menu": "autodoc.desktop"},
-      "ctk": {"dir": "/home/tony/autodoc-ctk", "desktop": "autodoc-ctk.desktop", "menu": "autodoc-ctk.desktop"}
+      "ctk": {"dir": "/home/tony/Projetos/autodoc-ctk", "desktop": "autodoc-ctk.desktop", "menu": "autodoc-ctk.desktop"}
     }
   },
 

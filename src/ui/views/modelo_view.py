@@ -3,11 +3,12 @@ ModeloView - aba Modelo com drag&drop, KPIs, lista de modelos carregados
 """
 import contextlib
 import os
-from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from ui import messagebox
 from ui.components.widgets import card, empty_state, kpi_card, pill, scroll_frame, section_header
+from ui.file_dialog import escolher_arquivo, escolher_arquivos
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_modelo
@@ -169,7 +170,7 @@ class ModeloView(ctk.CTkFrame):
         from preferencias import carregar_preferencias, set_preferencia
         prefs = carregar_preferencias()
         dir_ini = prefs.get('ultimo_diretorio_modelo', os.path.expanduser("~"))
-        caminho = filedialog.askopenfilename(title="Selecione o modelo (ODT/DOCX)", filetypes=obter_filetypes_modelo(), initialdir=dir_ini)
+        caminho = escolher_arquivo(self, titulo="Selecione o modelo (ODT/DOCX)", filetypes=obter_filetypes_modelo(), inicial=dir_ini)
         if not caminho:
             return
         set_preferencia('ultimo_diretorio_modelo', os.path.dirname(caminho))
@@ -184,7 +185,7 @@ class ModeloView(ctk.CTkFrame):
         from preferencias import carregar_preferencias
         prefs = carregar_preferencias()
         dir_ini = prefs.get('ultimo_diretorio_modelo', os.path.expanduser("~"))
-        caminhos = filedialog.askopenfilenames(title="Selecione modelos (ODT/DOCX)", filetypes=obter_filetypes_modelo(), initialdir=dir_ini)
+        caminhos = escolher_arquivos(self, titulo="Selecione modelos (ODT/DOCX)", filetypes=obter_filetypes_modelo(), inicial=dir_ini)
         for cam in caminhos:
             ok, msg = self.svc.adicionar_ao_lote(cam)
             if not ok:

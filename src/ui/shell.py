@@ -23,6 +23,7 @@ NAV_ITEMS = [
     ("Biblioteca", "library", "biblioteca"),
     ("Mapear", "target", "mapear"),
     ("Gerar", "spark", "gerar"),
+    ("Lote", "folder", "lote"),
     ("Histórico", "clock", "historico"),
 ]
 
@@ -45,6 +46,7 @@ class Shell:
             "biblioteca": self._make_biblioteca,
             "mapear": self._make_mapear,
             "gerar": self._make_gerar,
+            "lote": self._make_lote,
             "historico": self._make_historico,
         }
         self._setup_window()
@@ -72,6 +74,10 @@ class Shell:
     def _make_gerar(self):
         from ui.views.gerar_view import GerarView
         return GerarView(self.main, self.state, self.extracao_svc, self.geracao_svc)
+
+    def _make_lote(self):
+        from ui.views.lote_view import LoteView
+        return LoteView(self.main, self.state, self.geracao_svc)
 
     def _make_historico(self):
         from ui.views.historico_view import HistoricoView
@@ -281,13 +287,13 @@ class Shell:
     def _undo(self):
         ok, msg = self.map_svc.desfazer()
         if self.current == "mapear":
-            from tkinter import messagebox
+            from ui import messagebox
             messagebox.showinfo("Undo" if ok else "Aviso", msg)
 
     def _redo(self):
         ok, msg = self.map_svc.refazer()
         if self.current == "mapear":
-            from tkinter import messagebox
+            from ui import messagebox
             messagebox.showinfo("Redo" if ok else "Aviso", msg)
 
     def _toggle_theme(self):
@@ -357,7 +363,7 @@ class Shell:
         data = self.map_svc.restaurar_backup()
         if not data:
             return
-        from tkinter import messagebox
+        from ui import messagebox
         if messagebox.askyesno("Backup encontrado", "Um backup de mapeamento foi encontrado.\nDeseja restaurá-lo?"):
             self.map_svc.aplicar_backup(data)
             log_info("Backup restaurado (shell)")
@@ -376,5 +382,5 @@ class Shell:
         self.root.destroy()
 
     def _sobre(self):
-        from tkinter import messagebox
+        from ui import messagebox
         messagebox.showinfo("Sobre", f"AutoDoc v{VERSAO}  •  Premium Modular\n\nArquitetura: core/services/ui desacoplados\nOCR offline • ODT/DOCX • Lote\n\nDesenvolvido por Adriano Anthony\nadrianoanthonymma16@gmail.com\n\n100% offline • MIT")

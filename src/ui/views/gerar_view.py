@@ -3,17 +3,25 @@ GerarView - preview + edição + geração com threading OCR
 """
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from datetime import datetime
 
 import customtkinter as ctk
 
+from fichas import listar_fichas, obter_ficha, salvar_ficha
 from historico import adicionar_ao_historico
 from logger import log_erro, log_info
 from preferencias import carregar_preferencias, set_preferencia
-from ui.components.widgets import card, scroll_frame, section_header
+from saida import caminho_saida, renderizar_nome
+from ui import messagebox
+from ui.components.widgets import card, scroll_frame, section_header, wheel_para_scroll
+from ui.file_dialog import escolher_pasta, salvar_arquivo
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores_extra import sugerir_validacao, validar_campo
+
+# limiares de confiança de OCR (0..100)
+CONF_BOA = 80.0
+CONF_MEDIA = 55.0
 
 
 class GerarView(ctk.CTkFrame):
@@ -72,9 +80,69 @@ class GerarView(ctk.CTkFrame):
         ctk.CTkButton(actions, text="Preencher manual", image=get_icon("edit", 18, c["primary_hover"]), compound="left", height=44, corner_radius=12, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["primary"], command=self._preencher_manual).pack(side="left", expand=True, fill="x", padx=6)
         ctk.CTkButton(actions, text="Gerar", image=get_icon("rocket", 18, c["text_on_primary"]), compound="left", height=44, corner_radius=12, fg_color=c["success"], hover_color=c["success_hover"], text_color=c["text_on_primary"], font=("Inter",13,"bold"), command=self._gerar).pack(side="left", expand=True, fill="x", padx=6)
 
+        self._build_saida(self)
         self.status=ctk.CTkLabel(self, text="Dica: mapeie todos os campos para melhor resultado", font=FONTS["caption"], text_color=c["text_muted"])
         self.status.pack(fill="x", padx=24, pady=(0,12))
         self._refresh_status()
+
+    def _build_saida(self, parent):
+        """Opções de pasta e padrão de nome da saída (Fase 2)."""
+        c=get_colors()
+        prefs=carregar_preferencias()
+        box=card(parent)
+        box.pack(fill="x", padx=24, pady=(0,8))
+        ctk.CTkLabel(box, text="Saída", font=FONTS["h2"], text_color=c["text"]).pack(anchor="w", padx=16, pady=(12,4))
+
+        linha1=ctk.CTkFrame(box, fg_color="transparent")
+        linha1.pack(fill="x", padx=12, pady=2)
+        ctk.CTkLabel(linha1, text="Pasta", font=FONTS["caption"], text_color=c["text_muted"], width=52, anchor="w").pack(side="left")
+        self.ent_pasta=ctk.CTkEntry(linha1, height=32, font=FONTS["body_small"], placeholder_text="última pasta usada")
+        self.ent_pasta.pack(side="left", fill="x", expand=True, padx=(0,6))
+        pasta_atual=prefs.get('pasta_saida_padrao') or ""
+        if pasta_atual:
+            self.ent_pasta.insert(0, pasta_atual)
+        ctk.CTkButton(linha1, text="Escolher", width=90, height=32, corner_radius=8,
+                      fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1,
+                      border_color=c["border"], command=self._escolher_pasta).pack(side="left")
+
+        linha2=ctk.CTkFrame(box, fg_color="transparent")
+        linha2.pack(fill="x", padx=12, pady=(4,2))
+        ctk.CTkLabel(linha2, text="Nome", font=FONTS["caption"], text_color=c["text_muted"], width=52, anchor="w").pack(side="left")
+        self.ent_padrao=ctk.CTkEntry(linha2, height=32, font=FONTS["body_small"])
+        self.ent_padrao.pack(side="left", fill="x", expand=True)
+        self.ent_padrao.insert(0, prefs.get('padrao_nome_saida') or "{modelo}")
+
+        ctk.CTkLabel(box, text="tokens: {modelo} {data} {hora} {indice}  •  campos: {{nome}}", font=FONTS["caption"], text_color=c["text_faint"]).pack(anchor="w", padx=16, pady=(0,2))
+
+        self.chk_data=ctk.CTkCheckBox(box, text="Criar subpasta por data (AAAA-MM-DD)", font=FONTS["caption"], text_color=c["text_muted"], checkbox_width=18, checkbox_height=18)
+        self.chk_data.pack(anchor="w", padx=16, pady=(2,4))
+        if prefs.get('organizar_por_data'):
+            self.chk_data.select()
+
+        self.chk_preview=ctk.CTkCheckBox(box, text="Abrir pré-visualização depois de gerar", font=FONTS["caption"], text_color=c["text_muted"], checkbox_width=18, checkbox_height=18)
+        self.chk_preview.pack(anchor="w", padx=16, pady=(0,12))
+        if prefs.get('preview_apos_gerar'):
+            self.chk_preview.select()
+
+    def _escolher_pasta(self):
+        inicial=self.ent_pasta.get().strip() or carregar_preferencias().get('ultimo_diretorio_saida', "~")
+        pasta=escolher_pasta(self, titulo="Pasta de saída", inicial=inicial)
+        if not pasta:
+            return
+        self.ent_pasta.delete(0, "end")
+        self.ent_pasta.insert(0, pasta)
+
+    def _opcoes_saida(self):
+        """Lê e persiste as opções de saída. Retorna (pasta, padrao, organizar)."""
+        prefs=carregar_preferencias()
+        pasta=self.ent_pasta.get().strip() or prefs.get('pasta_saida_padrao') or prefs.get('ultimo_diretorio_saida', os.path.expanduser("~"))
+        padrao=self.ent_padrao.get().strip() or "{modelo}"
+        organizar=bool(self.chk_data.get())
+        set_preferencia('pasta_saida_padrao', pasta)
+        set_preferencia('padrao_nome_saida', padrao)
+        set_preferencia('organizar_por_data', organizar)
+        set_preferencia('preview_apos_gerar', bool(self.chk_preview.get()))
+        return pasta, padrao, organizar
 
     def _on_state(self, ev):
         if ev in ("mapeamento","modelo","backup"):
@@ -118,12 +186,13 @@ class GerarView(ctk.CTkFrame):
         def on_prog(cur, tot, ph):
             prog.set(cur/tot)
             lbl.configure(text=f"{cur}/{tot} — {ph}")
-        def on_done(dados):
+        def on_done(dados, conf):
             dlg.destroy()
-            self._abrir_edicao(dados)
+            self.state.confianca_ocr = conf
+            self._abrir_edicao(dados, conf)
         def on_err(ph, e): log_erro(f"OCR {ph}: {e}")
         marshal=lambda fn: self.after(0, fn)
-        self.extracao.extrair_todos(on_progress=on_prog, on_done=lambda d: self.after(0, lambda: on_done(d)), on_error=on_err, marshal=marshal)
+        self.extracao.extrair_todos(on_progress=on_prog, on_done=lambda d, c: self.after(0, lambda: on_done(d, c)), on_error=on_err, marshal=marshal)
 
     def _preencher_manual(self):
         if not self.state.placeholders:
@@ -132,7 +201,37 @@ class GerarView(ctk.CTkFrame):
         dados={ph: self.state.dados_extraidos.get(ph,"") for ph in self.state.placeholders}
         self._abrir_edicao(dados)
 
-    def _abrir_edicao(self, dados_temp):
+    def _cor_confianca(self, ph):
+        """Cor do selo por confiança: None = sem OCR; 0.0 após OCR = vazio."""
+        conf = self.state.confianca_ocr.get(ph)
+        if conf is None:
+            return None
+        c = get_colors()
+        if conf <= 0.0:
+            return c["danger"]
+        if conf < CONF_MEDIA:
+            return c["danger"]
+        if conf < CONF_BOA:
+            return c["warning"]
+        return c["success"]
+
+    def _selo_confianca(self, parent, ph):
+        """Label de confiança (ou None quando não houve OCR)."""
+        conf = self.state.confianca_ocr.get(ph)
+        if conf is None:
+            return None
+        c = get_colors()
+        if conf <= 0.0:
+            txt, cor = "OCR: campo vazio", c["danger"]
+        elif conf < CONF_MEDIA:
+            txt, cor = f"OCR: confiança baixa ({conf:.0f}%)", c["danger"]
+        elif conf < CONF_BOA:
+            txt, cor = f"OCR: confiança média ({conf:.0f}%)", c["warning"]
+        else:
+            txt, cor = f"OCR: confiança boa ({conf:.0f}%)", c["success"]
+        return ctk.CTkLabel(parent, text=txt, font=FONTS["caption"], text_color=cor)
+
+    def _abrir_edicao(self, dados_temp, conf_temp=None):
         c=get_colors()
         win=ctk.CTkToplevel(self)
         win.title("Revisar dados")
@@ -140,26 +239,84 @@ class GerarView(ctk.CTkFrame):
         win.transient(self.winfo_toplevel()); win.grab_set()
         ctk.CTkLabel(win, text="Revise e corrija", font=FONTS["h1"]).pack(pady=(12,2))
         ctk.CTkLabel(win, text="Correções se aplicam a todas as ocorrências do campo", font=FONTS["caption"], text_color=c["text_muted"]).pack()
-        scroll=scroll_frame(win, height=420)
+
+        barra_ficha=ctk.CTkFrame(win, fg_color="transparent")
+        barra_ficha.pack(fill="x", padx=16, pady=(8,0))
+        ctk.CTkLabel(barra_ficha, text="Ficha", font=FONTS["caption"], text_color=c["text_muted"]).pack(side="left")
+        fichas_disp=listar_fichas()
+        self._combo_ficha=ctk.CTkComboBox(barra_ficha, values=fichas_disp or ["(nenhuma)"], width=200, height=30, font=FONTS["caption"])
+        self._combo_ficha.pack(side="left", padx=8)
+        if fichas_disp:
+            self._combo_ficha.set(fichas_disp[0])
+        ctk.CTkButton(barra_ficha, text="Aplicar", width=80, height=30, corner_radius=8, fg_color=c["surface_elevated"], text_color=c["primary_hover"], border_width=1, border_color=c["border"], command=lambda: aplicar_ficha()).pack(side="left", padx=4)
+
+        scroll=scroll_frame(win, height=380)
         scroll.pack(fill="both", expand=True, padx=16, pady=10)
         entries={}
+        baixos=[]
+        if conf_temp is not None:
+            self.state.confianca_ocr = conf_temp
         for ph, val in dados_temp.items():
-            f=ctk.CTkFrame(scroll, fg_color=c["surface_elevated"], corner_radius=10, border_width=1, border_color=c["border"])
+            cor=self._cor_confianca(ph)
+            f=ctk.CTkFrame(scroll, fg_color=c["surface_elevated"], corner_radius=10, border_width=1, border_color=cor or c["border"])
             f.pack(fill="x", pady=4)
-            ctk.CTkLabel(f, text=f"{{{{{ph}}}}}", font=FONTS["h3"]).pack(anchor="w", padx=12, pady=(8,2))
+            top=ctk.CTkFrame(f, fg_color="transparent")
+            top.pack(fill="x", padx=12, pady=(8,2))
+            ctk.CTkLabel(top, text=f"{{{{{ph}}}}}", font=FONTS["h3"], text_color=c["text"]).pack(side="left")
+            selo=self._selo_confianca(top, ph)
+            if selo: selo.pack(side="right")
+            if cor in (c["danger"], c["warning"]):
+                baixos.append(ph)
             e=ctk.CTkTextbox(f, height=50, font=FONTS["body_small"])
             e.insert("1.0", val)
             e.pack(fill="x", padx=10, pady=(0,4))
+            wheel_para_scroll(scroll, e)
             entries[ph]=e
             tipo=sugerir_validacao(ph.lower())
             if tipo:
                 ctk.CTkLabel(f, text=f"validação: {tipo}", font=FONTS["caption"], text_color=c["text_faint"]).pack(anchor="w", padx=12, pady=(0,6))
+        originais=dict(dados_temp)
+
+        def aplicar_ficha():
+            nome=self._combo_ficha.get()
+            dados_ficha=obter_ficha(nome)
+            if not dados_ficha:
+                messagebox.showinfo("Fichas", "Selecione uma ficha salva.", parent=win)
+                return
+            aplicados=0
+            for ph, ent in entries.items():
+                if ph in dados_ficha:
+                    ent.delete("1.0", tk.END)
+                    ent.insert("1.0", dados_ficha[ph])
+                    aplicados+=1
+            self.status.configure(text=f"Ficha '{nome}' aplicada ({aplicados} campo(s)) — revise e confirme")
+
+        def salvar_ficha_ui():
+            nome=messagebox.pedir_texto("Salvar ficha", "Nome da ficha (ex.: nome do cliente):", parent=win)
+            if not nome:
+                return
+            atuais={ph: ent.get("1.0", tk.END).strip() for ph, ent in entries.items()}
+            ok, msg=salvar_ficha(nome, atuais)
+            if ok:
+                valores=listar_fichas()
+                self._combo_ficha.configure(values=valores)
+                self._combo_ficha.set(nome)
+            messagebox.showinfo("Fichas", msg, parent=win)
+
+        ctk.CTkButton(barra_ficha, text="Salvar ficha", width=110, height=30, corner_radius=8,
+                      fg_color=c["primary"], hover_color=c["primary_hover"], text_color=c["text_on_primary"],
+                      command=salvar_ficha_ui).pack(side="left", padx=4)
+        if baixos:
+            ctk.CTkLabel(scroll, text=f"Revisar com atenção: {', '.join(baixos)}", font=FONTS["caption"], text_color=c["warning"], justify="left").pack(anchor="w", padx=12, pady=(8, 2))
         def confirmar():
             erros=[]
             novos={}
             for ph, ent in entries.items():
                 txt=ent.get("1.0", tk.END).strip()
                 novos[ph]=txt
+                # valor alterado manualmente: a confiança do OCR não vale mais
+                if txt != originais.get(ph, ""):
+                    self.state.confianca_ocr.pop(ph, None)
                 if txt:
                     ok,msg=validar_campo(ph, txt)
                     if not ok: erros.append(f"{ph}: {msg}")
@@ -183,46 +340,58 @@ class GerarView(ctk.CTkFrame):
         if not self.state.modelo_path and not self.state.modelos:
             messagebox.showwarning("Aviso","Carregue um modelo")
             return
+        pasta_padrao, padrao, organizar = self._opcoes_saida()
         modelos=self.state.modelos if self.state.modelos else [{'path':self.state.modelo_path,'tipo':self.state.modelo_tipo,'placeholders':self.state.placeholders}]
         tem_lote=bool(self.state.lote_fontes)
         if len(modelos)==1 and not tem_lote:
             m=modelos[0]
             dados={ph: self.state.dados_extraidos.get(ph,"") for ph in m['placeholders']}
             ext=os.path.splitext(m['path'])[1]
-            out=filedialog.asksaveasfilename(defaultextension=ext, filetypes=[(ext.upper().replace('.',''), f"*{ext}")], initialfile=os.path.basename(m['path']), initialdir=carregar_preferencias().get('ultimo_diretorio_saida', os.path.expanduser("~")))
+            inicialdir=pasta_padrao
+            if organizar:
+                inicialdir=os.path.join(pasta_padrao, datetime.now().strftime("%Y-%m-%d"))
+                os.makedirs(inicialdir, exist_ok=True)
+            out=salvar_arquivo(self, titulo="Salvar documento", defaultextension=ext, filetypes=[(ext.upper().replace('.',''), f"*{ext}")], nome_inicial=f"{renderizar_nome(padrao, m['path'], dados)}{ext}", inicial=inicialdir)
             if not out: return
             set_preferencia('ultimo_diretorio_saida', os.path.dirname(out))
             try:
                 self.geracao.gerar_um(m['path'], m['tipo'], dados, out)
                 messagebox.showinfo("Sucesso", f"Documento gerado:\n{out}")
-                adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]))
+                adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]), dados=dados)
                 self.status.configure(text=f"Salvo: {os.path.basename(out)}")
                 log_info(f"Gerado: {out}")
+                if self.chk_preview.get():
+                    self._abrir_preview(out)
             except Exception as e:
                 messagebox.showerror("Erro", str(e)); log_erro(str(e))
             return
-        pasta=filedialog.askdirectory(title="Selecione pasta de saída")
+        pasta=escolher_pasta(self, titulo="Selecione pasta de saída", inicial=pasta_padrao)
         if not pasta: return
+        set_preferencia('ultimo_diretorio_saida', pasta)
         fontes=self.state.lote_fontes if tem_lote else [None]
         total_jobs=len(fontes)*len(modelos)
+        padrao_efetivo = padrao
+        if tem_lote and padrao == "{modelo}":
+            padrao_efetivo = "{modelo}_{indice}"
+
+        primeira=[None]
 
         def run():
             proc=0; errs=[]
-            for fonte in fontes:
+            for idx, fonte in enumerate(fontes, start=1):
                 dados_fonte=self.extracao.extrair_de_fonte(fonte) if tem_lote else self.state.dados_extraidos
                 for m in modelos:
                     dados={ph: dados_fonte.get(ph,"") for ph in m['placeholders']}
                     try:
                         ext=os.path.splitext(m['path'])[1]
-                        base=os.path.splitext(os.path.basename(m['path']))[0]
-                        if tem_lote:
-                            fonte_nome=os.path.splitext(os.path.basename(fonte['documento_path']))[0]
-                            out=os.path.join(pasta, f"{base}_{fonte_nome}{ext}")
-                        else:
-                            out=os.path.join(pasta, f"{base}{ext}")
+                        out=caminho_saida(pasta, padrao_efetivo, m['path'], dados, extensao=ext,
+                                          indice=idx if tem_lote else None,
+                                          organizar_por_data=organizar)
                         self.geracao.gerar_um(m['path'], m['tipo'], dados, out)
                         proc+=1
-                        adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]))
+                        if primeira[0] is None:
+                            primeira[0]=out
+                        adicionar_ao_historico(m['path'], m['tipo'], out, len([v for v in dados.values() if v]), dados=dados)
                     except Exception as e:
                         errs.append(f"{os.path.basename(m['path'])}: {e}")
             return proc, errs
@@ -232,9 +401,70 @@ class GerarView(ctk.CTkFrame):
             if errs: msg+="\nErros:\n"+"\n".join(errs)
             messagebox.showinfo("Geração", msg)
             self.status.configure(text=f"{proc} gerado(s)")
+            if self.chk_preview.get() and primeira[0]:
+                self._abrir_preview(primeira[0])
 
         # geração em thread: OCR/processamento fora da main thread, tudo o que
         # toca Tk volta marshallizado via after(0, ...)
         import threading
-        t=threading.Thread(target=lambda: self.after(0, lambda: done(*run())), daemon=True)
+        def worker():
+            resultado=run()
+            self.after(0, lambda: done(*resultado))
+        t=threading.Thread(target=worker, daemon=True)
         t.start()
+
+    def _abrir_preview(self, arquivo):
+        """Janela com as primeiras páginas do documento gerado (Fase 5)."""
+        c=get_colors()
+        win=ctk.CTkToplevel(self)
+        win.title(f"Pré-visualização — {os.path.basename(arquivo)}")
+        win.geometry("780x840")
+        win.transient(self.winfo_toplevel())
+        lbl=ctk.CTkLabel(win, text="Convertendo com LibreOffice…", font=FONTS["body"], text_color=c["text_muted"])
+        lbl.pack(pady=24)
+        refs=[]
+
+        def mostrar(caminhos):
+            if not win.winfo_exists():
+                return
+            lbl.destroy()
+            from PIL import Image
+            scroll=scroll_frame(win, height=700)
+            scroll.pack(fill="both", expand=True, padx=10, pady=(10,4))
+            for caminho in caminhos:
+                try:
+                    img=Image.open(caminho)
+                    largura_px, altura_px=img.size
+                    largura=min(720, largura_px)
+                    foto=ctk.CTkImage(light_image=img, dark_image=img,
+                                      size=(largura, max(1, int(altura_px*largura/largura_px))))
+                    refs.append(foto)
+                    ctk.CTkLabel(scroll, text="", image=foto).pack(pady=6)
+                except Exception as e:
+                    log_erro(f"Preview: {e}")
+            ctk.CTkButton(win, text="Fechar", width=120, height=36, corner_radius=10,
+                          fg_color=c["surface_elevated"], text_color=c["text"],
+                          border_width=1, border_color=c["border"],
+                          command=win.destroy).pack(pady=(4,12))
+            win._refs_preview=refs
+
+        def erro(mensagem):
+            if not win.winfo_exists():
+                return
+            lbl.configure(text=f"Não foi possível pré-visualizar.\n{mensagem}", text_color=c["danger"])
+            ctk.CTkButton(win, text="Fechar", width=120, height=36, corner_radius=10,
+                          fg_color=c["surface_elevated"], text_color=c["text"],
+                          border_width=1, border_color=c["border"],
+                          command=win.destroy).pack(pady=12)
+
+        def run():
+            try:
+                from preview import renderizar
+                caminhos=renderizar(arquivo, max_paginas=3)
+                self.after(0, lambda: mostrar(caminhos))
+            except Exception as e:
+                log_erro(f"Preview: {e}")
+                self.after(0, lambda msg=str(e): erro(msg))
+
+        import threading
+        threading.Thread(target=run, daemon=True).start()

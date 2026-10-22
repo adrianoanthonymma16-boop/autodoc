@@ -20,6 +20,26 @@ except ImportError as _e:
 PLACEHOLDER_RE = re.compile(r'\{\{\s*([^}]+?)\s*\}\}')
 
 
+def _partes_cabecalho_rodape(section):
+    """Acessa header/footer com tolerância.
+
+    Em builds congelados (PyInstaller) o python-docx pode não achar o template
+    default-header.xml ao criar uma seção sem cabeçalho; nesse caso o documento
+    ainda deve carregar (só os placeholders de cabeçalho/rodapé ficam de fora).
+    """
+    partes = []
+    for attr in ("header", "footer"):
+        try:
+            partes.append(getattr(section, attr))
+        except Exception as e:
+            try:
+                from logger import log_erro
+                log_erro(f"DOCX: nao foi possivel acessar {attr}: {e}")
+            except Exception:
+                pass
+    return partes
+
+
 def _text_from_paragraph(paragraph):
     """Concatena runs para detectar placeholders divididos"""
     return "".join(run.text for run in paragraph.runs)
@@ -101,7 +121,7 @@ def extrair_placeholders_docx(caminho_docx):
 
     # Também cobre headers/footers
     for section in doc.sections:
-        for hdr in [section.header, section.footer]:
+        for hdr in _partes_cabecalho_rodape(section):
             if hdr:
                 for p in hdr.paragraphs:
                     text = _text_from_paragraph(p)
@@ -127,7 +147,7 @@ def gerar_docx_preenchido(caminho_modelo, dados, caminho_saida):
                     _replace_in_paragraph(paragraph, dados)
 
     for section in doc.sections:
-        for hdr in [section.header, section.footer]:
+        for hdr in _partes_cabecalho_rodape(section):
             if hdr:
                 for p in hdr.paragraphs:
                     _replace_in_paragraph(p, dados)

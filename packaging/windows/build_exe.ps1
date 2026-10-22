@@ -46,6 +46,9 @@ Remove-Item -Recurse -Force "dist\AutoDoc" -ErrorAction SilentlyContinue
     --hidden-import PIL._tkinter_finder `
     --collect-all customtkinter `
     --collect-all ttkbootstrap `
+    --collect-all openpyxl `
+    --collect-all pypdfium2 `
+    --add-data "$Root\packaging\pyinstaller-docx-parts.keep;docx/parts" `
     --distpath "dist" `
     --workpath "build\pyinstaller-win" `
     --specpath "build" `

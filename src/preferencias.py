@@ -5,7 +5,9 @@ Gerencia preferências do usuário salvas em JSON
 import json
 import os
 
-PREFS_PATH = os.path.expanduser("~/.autodoc/prefs.json")
+from config import PASTA_APP
+
+PREFS_PATH = os.path.join(PASTA_APP, "prefs.json")
 
 DEFAULTS = {
     "tema": "cosmo",
@@ -13,6 +15,9 @@ DEFAULTS = {
     "ultimo_diretorio_modelo": os.path.expanduser("~"),
     "ultimo_diretorio_anexo": os.path.expanduser("~"),
     "ultimo_diretorio_saida": os.path.expanduser("~"),
+    "pasta_saida_padrao": "",
+    "padrao_nome_saida": "{modelo}",
+    "organizar_por_data": False,
     "idioma": "pt",
     "confirmacoes_ativadas": True,
 }

@@ -72,6 +72,66 @@ def preprocessar_imagem(imagem_pil):
     return binary
 
 
+def calcular_confianca(data):
+    """
+    Calcula confiança média ponderada (por nº de caracteres) de um resultado
+    de pytesseract.image_to_data.
+
+    Args:
+        data (dict): {'conf': [...], 'text': [...]}
+
+    Returns:
+        float: confiança média 0..100 (0.0 quando não há palavras válidas)
+    """
+    textos = data.get('text', [])
+    confs = data.get('conf', [])
+    peso_total = 0.0
+    soma = 0.0
+    for texto, conf in zip(textos, confs):
+        try:
+            conf_num = float(conf)
+        except (TypeError, ValueError):
+            continue
+        if conf_num < 0:
+            continue
+        peso = len(texto.strip())
+        if peso == 0:
+            continue
+        peso_total += peso
+        soma += conf_num * peso
+    if peso_total == 0:
+        return 0.0
+    return round(soma / peso_total, 1)
+
+
+def extrair_texto_com_confianca(imagem_pil):
+    """
+    OCR com confiança por região usando image_to_data.
+
+    Returns:
+        tuple[str, float]: (texto limpo, confiança 0..100).
+        Texto curto (<= 2 char) retorna ("", 0.0) — mesmo contrato de
+        extrair_texto_da_regiao.
+    """
+    imagem_processada = preprocessar_imagem(imagem_pil)
+
+    data = pytesseract.image_to_data(
+        imagem_processada,
+        lang=TESSERACT_LANG,
+        config=TESSERACT_CONFIG,
+        output_type=pytesseract.Output.DICT
+    )
+
+    texto = ' '.join(
+        t for t in data.get('text', []) if t and t.strip()
+    )
+    texto = ' '.join(texto.split())
+
+    if len(texto) <= 2:
+        return "", 0.0
+    return texto, calcular_confianca(data)
+
+
 def extrair_texto_da_regiao(imagem_pil):
     """
     Extrai texto de uma região da imagem usando Tesseract
@@ -98,6 +158,26 @@ def extrair_texto_da_regiao(imagem_pil):
     texto = ' '.join(texto.split())
 
     return texto if len(texto) > 2 else ""
+
+
+def extrair_recorte_com_confianca(imagem_original, coordenadas):
+    """
+    OCR com confiança de um recorte da imagem.
+
+    Args:
+        imagem_original (PIL.Image): Imagem completa
+        coordenadas (dict): {'x1':, 'y1':, 'x2':, 'y2'}
+
+    Returns:
+        tuple[str, float]: (texto, confiança 0..100)
+    """
+    regiao = imagem_original.crop((
+        coordenadas['x1'],
+        coordenadas['y1'],
+        coordenadas['x2'],
+        coordenadas['y2']
+    ))
+    return extrair_texto_com_confianca(regiao)
 
 
 def extrair_texto_do_recorte(imagem_original, coordenadas):

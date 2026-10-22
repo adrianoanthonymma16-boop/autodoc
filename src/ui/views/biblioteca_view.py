@@ -2,11 +2,11 @@
 BibliotecaView - lista modelos salvos com busca, preview e ações
 """
 import os
-from tkinter import messagebox
 
 import customtkinter as ctk
 
 from modelos_salvos import carregar_modelo, listar_modelos, remover_modelo
+from ui import messagebox
 from ui.components.widgets import card, empty_state, scroll_frame, section_header, table_columns
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors

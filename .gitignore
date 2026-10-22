@@ -8,3 +8,14 @@ dist/
 .venv-build/
 icon.ico
 assets/fonts/Inter.ttf
+*.snap
+.craft/
+
+# Snapcraft
+parts/
+prime/
+stage/
+
+# Artefatos de análise e projetos não relacionados
+graphify-out/
+linkedin-resume-optimizer/

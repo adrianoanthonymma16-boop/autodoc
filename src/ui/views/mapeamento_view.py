@@ -2,12 +2,13 @@
 MapeamentoView - placeholder list + documento list + canvas moderno
 """
 import os
-from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from ui import messagebox
 from ui.canvas.image_canvas import ImageCanvas
 from ui.components.widgets import card, scroll_frame, section_header
+from ui.file_dialog import escolher_arquivo, salvar_arquivo
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores import obter_filetypes_anexo
@@ -257,7 +258,7 @@ class MapeamentoView(ctk.CTkFrame):
         from preferencias import carregar_preferencias, set_preferencia
         prefs=carregar_preferencias()
         dir_ini=prefs.get('ultimo_diretorio_anexo', os.path.expanduser("~"))
-        caminho=filedialog.askopenfilename(filetypes=obter_filetypes_anexo(), initialdir=dir_ini)
+        caminho=escolher_arquivo(self, titulo="Anexar documento fonte", filetypes=obter_filetypes_anexo(), inicial=dir_ini)
         if not caminho: return
         set_preferencia('ultimo_diretorio_anexo', os.path.dirname(caminho))
         ok, msg=self.doc_svc.anexar(caminho)
@@ -306,7 +307,7 @@ class MapeamentoView(ctk.CTkFrame):
         if not self.state.mapeamento:
             messagebox.showwarning("Aviso","Nenhum mapeamento")
             return
-        caminho=filedialog.asksaveasfilename(title="Exportar", defaultextension=".json", filetypes=[("JSON","*.json")], initialfile="mapeamento.json")
+        caminho=salvar_arquivo(self, titulo="Exportar", defaultextension=".json", filetypes=[("JSON","*.json")], nome_inicial="mapeamento.json")
         if not caminho: return
         try:
             self.map_svc.exportar(caminho)
@@ -315,7 +316,7 @@ class MapeamentoView(ctk.CTkFrame):
             messagebox.showerror("Erro", str(e))
 
     def _import(self):
-        caminho=filedialog.askopenfilename(title="Importar", filetypes=[("JSON","*.json")])
+        caminho=escolher_arquivo(self, titulo="Importar", filetypes=[("JSON","*.json")])
         if not caminho: return
         import json
         try:

@@ -4,7 +4,8 @@ Registra erros, ações e debug em arquivo
 """
 
 import logging
-import os
+
+from config import LOG_FILE
 
 LOGGER = None
 
@@ -14,18 +15,13 @@ def _criar_logger():
     if LOGGER is not None:
         return LOGGER
 
-    pasta_app = os.path.expanduser("~/.autodoc")
-    os.makedirs(pasta_app, exist_ok=True)
-
-    log_path = os.path.join(pasta_app, "app.log")
-
     LOGGER = logging.getLogger("AutoDoc")
     LOGGER.setLevel(logging.DEBUG)
 
     if LOGGER.handlers:
         return LOGGER
 
-    fh = logging.FileHandler(log_path, encoding="utf-8")
+    fh = logging.FileHandler(LOG_FILE, encoding="utf-8")
     fh.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(

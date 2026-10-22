@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="autodoc-icon-title autodoc-icon-desc">
+  <title id="autodoc-icon-title">AutoDoc</title>
+  <desc id="autodoc-icon-desc">Faísca branca de quatro pontas sobre um quadrado arredondado esmeralda.</desc>
+  <defs>
+    <linearGradient id="autodoc-bg" x1="64" y1="32" x2="448" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="0.52" stop-color="#047857"/>
+      <stop offset="1" stop-color="#064E3B"/>
+    </linearGradient>
+    <radialGradient id="autodoc-glow" cx="28%" cy="18%" r="78%">
+      <stop stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#autodoc-bg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#autodoc-glow)"/>
+  <rect x="2.5" y="2.5" width="507" height="507" rx="113.5" fill="none" stroke="#6EE7B7" stroke-opacity="0.28" stroke-width="5"/>
+  <path d="M256 100 L287 225 L412 256 L287 287 L256 412 L225 287 L100 256 L225 225 Z"
+        fill="#FFFFFF" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+</svg>

@@ -270,7 +270,7 @@ class TestExtracaoServiceCallbacks:
         }
         return state
 
-    @patch("services.extracao.extrair_texto_do_recorte", return_value="TEXTO")
+    @patch("services.extracao.extrair_recorte_com_confianca", return_value=("TEXTO", 95.0))
     @patch("services.extracao.Image.open")
     def test_callbacks_marshallizados_apenas_mapeados(self, mock_open, mock_ocr):
         from services.extracao import ExtracaoService
@@ -293,15 +293,18 @@ class TestExtracaoServiceCallbacks:
         # on_done continua sendo agendado pelo caller na view (não no serviço)
         on_done.assert_called_once()
         dados = on_done.call_args[0][0]
+        conf = on_done.call_args[0][1]
         assert dados["PH1"] == "TEXTO"
+        assert conf["PH1"] == 95.0
         assert dados["PH2"] == ""  # não mapeado fica vazio
+        assert conf["PH2"] is None  # não mapeado: sem confiança
         # executa a fila agendada (simulando a main thread)
         for fn in agenda:
             fn()
         assert on_prog.call_count == 2  # PH1 e PH2
         assert on_err.call_count == 0
 
-    @patch("services.extracao.extrair_texto_do_recorte", side_effect=RuntimeError("ocr fail"))
+    @patch("services.extracao.extrair_recorte_com_confianca", side_effect=RuntimeError("ocr fail"))
     def test_on_error_marshallizado(self, mock_ocr):
         from services.extracao import ExtracaoService
         svc = ExtracaoService(self._state_mapeado())

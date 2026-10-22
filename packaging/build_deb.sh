@@ -50,6 +50,9 @@ rm -rf "$PYI_DIST" "$PYI_WORK" "$STAGE"
     --hidden-import PIL._tkinter_finder \
     --collect-all customtkinter \
     --collect-all ttkbootstrap \
+    --collect-all openpyxl \
+    --collect-all pypdfium2 \
+    --add-data "$ROOT/packaging/pyinstaller-docx-parts.keep:docx/parts" \
     --distpath "$PYI_DIST" \
     --workpath "$PYI_WORK" \
     --specpath "$BUILD" \

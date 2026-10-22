@@ -1,0 +1,15 @@
+.git
+.github
+.planning
+.venv-build
+.pytest_cache
+.ruff_cache
+__pycache__
+build
+dist
+graphify-out
+linkedin-resume-optimizer
+*.deb
+*.exe
+*.run
+.project_memory.json

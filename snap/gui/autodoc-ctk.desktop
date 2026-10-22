@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=AutoDoc
+GenericName=Preenchedor de documentos
+Comment=Preencha modelos ODT/DOCX automaticamente com OCR
+Exec=autodoc-ctk
+Icon=autodoc-ctk
+Terminal=false
+Categories=Office;
+Keywords=autodoc;ocr;odt;docx;documento;modelo;
+StartupNotify=true
+StartupWMClass=AutoDoc

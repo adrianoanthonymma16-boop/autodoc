@@ -193,16 +193,21 @@ class MapeamentoService:
         self.state.notify('modelos')
 
     # --- backup atômico ---
+    BACKUP_SCHEMA = 2  # v2: inclui dados_extraidos
+
     def backup(self):
         if not (self.state.mapeamento and self.state.modelo_path):
             return
         backup = {
+            'schema': self.BACKUP_SCHEMA,
             'modelo_path': self.state.modelo_path,
             'modelo_tipo': self.state.modelo_tipo,
             'placeholders': self.state.placeholders,
             'mapeamento': self.state.mapeamento,
             'lote_fontes': self.state.lote_fontes,
-            'modelos': self.state.modelos
+            'modelos': self.state.modelos,
+            'dados_extraidos': self.state.dados_extraidos,
+            'confianca_ocr': self.state.confianca_ocr,
         }
         os.makedirs(os.path.dirname(BACKUP_FILE), exist_ok=True)
         tmp = BACKUP_FILE + ".tmp"
@@ -234,6 +239,8 @@ class MapeamentoService:
         self.state.modelo_path = backup.get('modelo_path')
         self.state.modelo_tipo = backup.get('modelo_tipo')
         self.state.placeholders = backup.get('placeholders', [])
+        self.state.dados_extraidos = dict(backup.get('dados_extraidos', {}))
+        self.state.confianca_ocr = dict(backup.get('confianca_ocr', {}))
         self.state.mapeamento = {}
         for ph, dados in backup.get('mapeamento', {}).items():
             self.state.mapeamento[ph] = {

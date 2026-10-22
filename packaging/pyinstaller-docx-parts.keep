@@ -1,0 +1,1 @@
+Arquivo marcador: garante a pasta docx/parts no bundle PyInstaller (python-docx resolve templates via ../templates).

@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.2-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR — **v4.0-premium modular** com interface premium responsiva, arquitetura desacoplada e 16 bugs corrigidos.
+Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.2**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
 
 ---
 
@@ -14,7 +14,12 @@ Automatize o preenchimento de documentos ODT/DOCX usando OCR — **v4.0-premium 
 - **Múltiplos Modelos** — Anexe vários modelos ODT/DOCX; placeholders iguais são unificados automaticamente
 - **Lote de Fontes** — Mapeie placeholders em vários documentos-fonte e gere uma saída por fonte
 - **Geração Unificada** — Um único botão gera para qualquer combinação (1/N modelos × 1/N fontes)
-- **Duas Interfaces** — Escolha entre ttkbootstrap (leve) ou CustomTkinter (visual moderno)
+- **Lote por planilha** — Leia XLSX/CSV/TSV, ajuste o mapeamento das colunas e gere um documento por linha
+- **Fichas de dados** — Salve conjuntos de valores (cliente, contrato) e reaplique com um clique
+- **Saída organizada** — Pasta padrão, padrão de nome e subpasta por data
+- **Pré-visualização** — Veja o documento gerado antes de abrir
+- **Confiança de OCR** — Cada campo indica a confiança da leitura e destaca os duvidosos
+- **Interface premium (CustomTkinter)** — Sidebar, temas claro/escuro, seletor de arquivos e avisos integrados ao visual
 - **Modelos ODT/DOCX** — Placeholders `{{nome}}`, `{{cpf}}`, `{{data}}`
 - **Preenchimento Manual** — Digite valores diretamente nos placeholders, sem precisar de OCR
 - **OCR Inteligente** — Tesseract com pré-processamento avançado de imagem
@@ -106,12 +111,21 @@ python3 run_ctk.py
 > Baixe os instaladores na página [Releases](https://github.com/adrianoanthonymma16-boop/autodoc/releases/latest).
 > Os pacotes já incluem o runtime Python — não é preciso instalar Python nem dependências.
 
+### Linux — Snap (Ubuntu e derivados)
+
+```bash
+sudo snap install autodoc-ctk
+```
+
+O snap já inclui o Tesseract com português e a fonte Inter. Os dados ficam em
+`~/snap/autodoc-ctk/common/autodoc`.
+
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.1_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.2_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.1_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.2_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -129,7 +143,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.1_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.2_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -182,24 +196,31 @@ autodoc/
     ├── services/
     │   ├── modelo.py           # ModeloService (lote, validação)
     │   ├── documento.py        # DocumentoService (PDF/HEIC/IMG)
-    │   ├── mapeamento.py       # MapeamentoService (undo/redo corrigido, backup atômico)
-    │   ├── extracao.py         # ExtracaoService (OCR em thread)
-    │   └── geracao.py          # GeracaoService
+    │   ├── mapeamento.py       # MapeamentoService (undo/redo, backup atômico)
+    │   ├── extracao.py         # ExtracaoService (OCR em thread + confiança)
+    │   ├── geracao.py          # GeracaoService
+    │   └── planilha.py         # Leitura XLSX/CSV/TSV e mapeamento de colunas
     ├── ui/
     │   ├── theme.py            # Design System LIGHT/DARK + FONTS
     │   ├── shell.py            # Shell: sidebar responsiva + 5 views
     │   ├── canvas/
     │   │   └── image_canvas.py # ImageCanvas (zoom/pan cross-platform, coords corrigidas)
     │   ├── components/
-    │   │   └── widgets.py      # card, kpi_card, pill, empty_state
+    │   │   └── widgets.py      # card, kpi_card, pill, empty_state, scroll helpers
+    │   ├── file_dialog.py      # Seletor de arquivos/pastas no tema do app
+    │   ├── messagebox.py       # Avisos e confirmações tematizados
     │   └── views/
     │       ├── modelo_view.py      # KPIs + busca + chips
     │       ├── biblioteca_view.py  # tabela com seleção
     │       ├── mapeamento_view.py  # progress + dual lists + canvas
-    │       ├── gerar_view.py       # preview + edição threaded
+    │       ├── gerar_view.py       # preview + edição threaded + fichas
+    │       ├── lote_view.py        # lote por planilha + relatório
     │       └── historico_view.py
     ├── interface.py            # LEGADO ttkbootstrap 1877 linhas (mantido como fallback)
     ├── interface_ctk.py        # LEGADO CTk monolito 1901 linhas (mantido como fallback)
+    ├── fichas.py               # Fichas de dados reutilizáveis
+    ├── saida.py                # Nome/pasta de saída (padrões e subpasta por data)
+    ├── preview.py              # LibreOffice → PDF → PNG (pypdfium2)
     ├── ocr.py                  # fix RGBA/L/P
     ├── modelo_odt.py           # fix tail/spans + placeholders com "/" e espaço
     ├── modelo_docx.py          # fix runs + placeholders com "/" e espaço
@@ -237,7 +258,14 @@ Principais problemas corrigidos na v4.0 (16 bugs):
 
 ## Versões
 
-### v4.0-premium (atual) — Modular + Premium UI
+### v4.0.2 (atual) — Lote por planilha, fichas e pré-visualização
+- **Lote por planilha** — XLSX/CSV/TSV com sugestão automática de mapeamento e relatório por linha
+- **Fichas de dados** e **saída organizada** (pasta padrão, padrão de nome, subpasta por data)
+- **Pré-visualização** do documento gerado e **confiança por campo de OCR**
+- **Seletor de arquivos e avisos próprios** — mesmo tema do app, com arquivos ocultos fora da lista
+- **Correções** — DOCX empacotado sem header/footer, rolagem do preenchimento manual, layout do Lote
+
+### v4.0-premium — Modular + Premium UI
 - **Arquitetura desacoplada** — `core/state.py` (AppState observável) + `services/` (modelo, documento, mapeamento, extracao, geracao) + `ui/` (theme, shell, canvas, views) — monolito 1901 linhas → 1403 linhas modulares
 - **UI premium responsiva** — sidebar dark `#0F172A` colapsável (<1100px), Design System LIGHT/DARK, KPIs, chips `{{campo}}`, progress bar, cards 16px, empty states
 - **Canvas corrigido** — zoom cross-platform (`Ctrl+MouseWheel` + `Ctrl+Button-4/5`), pan `Button-2`/`Shift+drag`, cálculo coords com `pan_x` + escala + clamp
@@ -317,12 +345,12 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-4.0--premium-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.2-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automate ODT/DOCX document filling using OCR with two available interfaces: ttkbootstrap (lightweight) and CustomTkinter (modern).
+Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.2**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
 
 ---
 
@@ -331,7 +359,12 @@ Automate ODT/DOCX document filling using OCR with two available interfaces: ttkb
 - **Multiple Templates** — Load several ODT/DOCX templates; identical placeholders are auto-merged
 - **Batch Sources** — Map placeholders across multiple source documents and generate one output per source
 - **Unified Generation** — Single button generates for any combination (1/N templates × 1/N sources)
-- **Dual Interface** — Choose between ttkbootstrap (lightweight) or CustomTkinter (modern look)
+- **Spreadsheet batch** — Read XLSX/CSV/TSV, adjust the column mapping and generate one document per row
+- **Data profiles** — Save sets of values (client, contract) and reapply them in one click
+- **Organized output** — Default folder, filename pattern and optional date subfolder
+- **Preview** — Render the generated document before opening it
+- **OCR confidence** — Each field shows the reading confidence and highlights doubtful ones
+- **Premium UI (CustomTkinter)** — Sidebar, light/dark themes, themed file picker and dialogs
 - **ODT/DOCX Templates** — Placeholders `{{name}}`, `{{cpf}}`, `{{date}}`
 - **Manual Filling** — Type values directly into placeholders, no OCR needed
 - **Smart OCR** — Tesseract with advanced image pre-processing
@@ -423,16 +456,25 @@ python3 run_ctk.py
 > Download the installers from [Releases](https://github.com/adrianoanthonymma16-boop/autodoc/releases/latest).
 > They bundle the Python runtime — no Python or pip install needed.
 
+### Linux — Snap (Ubuntu and derivatives)
+
+```bash
+sudo snap install autodoc-ctk
+```
+
+The snap bundles Tesseract with Portuguese and the Inter font. Data lives in
+`~/snap/autodoc-ctk/common/autodoc`.
+
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.1_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.2_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.1_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.2_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
@@ -457,8 +499,9 @@ autodoc/
 ├── src/
 │   ├── config.py               # VERSAO=4.0-premium
 │   ├── core/state.py + bus.py
-│   ├── services/{modelo,documento,mapeamento,extracao,geracao}.py
-│   ├── ui/{theme,shell,canvas/image_canvas,components/widgets,views/*}.py
+│   ├── services/{modelo,documento,mapeamento,extracao,geracao,planilha}.py
+│   ├── ui/{theme,shell,canvas/image_canvas,components/widgets,file_dialog,messagebox,views/*}.py
+│   ├── {fichas,saida,preview}.py
 │   ├── interface.py            # LEGADO 1877 linhas
 │   └── interface_ctk.py        # LEGADO 1901 linhas
 ```
@@ -467,7 +510,13 @@ autodoc/
 
 ## Versions
 
-### v4.0-premium (current) — Modular + Premium UI
+### v4.0.2 (current) — Spreadsheet batch, profiles and preview
+- Spreadsheet batch (XLSX/CSV/TSV) with automatic column mapping and per-row report
+- Data profiles, organized output and document preview; per-field OCR confidence
+- Themed file picker and dialogs; hidden dotfiles stay out of the list
+- Fixes: packaged DOCX without header/footer, manual-fill scrolling, batch layout
+
+### v4.0-premium — Modular + Premium UI
 - Decoupled architecture — `core/state` + `services/` + `ui/` — 1901-line monolith → 1403 modular lines
 - Premium responsive UI — dark sidebar collapsible, Design System, KPIs, chips, progress
 - Fixed canvas (cross-platform zoom/pan, coords), 16 bugs, threaded OCR, placeholders with `/` and space supported

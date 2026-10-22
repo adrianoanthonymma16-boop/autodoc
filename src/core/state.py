@@ -30,6 +30,13 @@ class AppState:
 
     # Dados extraídos
     dados_extraidos: dict[str, str] = field(default_factory=dict)
+    confianca_ocr: dict[str, float | None] = field(default_factory=dict)
+
+    # Planilha (lote de dados)
+    planilha_path: str | None = None
+    planilha_colunas: list[str] = field(default_factory=list)
+    planilha_linhas: list[list[str]] = field(default_factory=list)
+    planilha_mapeamento: dict[str, str] = field(default_factory=dict)
 
     # UI state
     zoom_level: float = 1.0

@@ -35,14 +35,15 @@ def salvar_historico(historico):
             os.remove(tmp)
 
 
-def adicionar_ao_historico(modelo_path, tipo_modelo, saida_path, num_campos):
+def adicionar_ao_historico(modelo_path, tipo_modelo, saida_path, num_campos, dados=None):
     historico = carregar_historico()
     historico.append({
         "data": datetime.now().isoformat(),
         "modelo": os.path.basename(modelo_path),
         "tipo_modelo": tipo_modelo,
         "saida": saida_path,
-        "num_campos_preenchidos": num_campos
+        "num_campos_preenchidos": num_campos,
+        "dados": dict(dados or {}),
     })
     salvar_historico(historico)
 

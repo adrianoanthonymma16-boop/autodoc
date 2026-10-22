@@ -2,9 +2,8 @@
 Pop-ups informativos para o usuário
 """
 
-from tkinter import messagebox
-
 from config import ANEXO_EXTENSOES, MODELO_EXTENSOES
+from ui import messagebox
 
 
 def mostrar_info_modelos():

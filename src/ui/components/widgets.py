@@ -72,8 +72,8 @@ def scroll_frame(parent, **kwargs):
     c = get_colors()
     kwargs.setdefault("fg_color", c["surface_elevated"])
     kwargs.setdefault("scrollbar_fg_color", "transparent")
-    kwargs.setdefault("scrollbar_button_color", c["border"])
-    kwargs.setdefault("scrollbar_button_hover_color", c["border_strong"])
+    kwargs.setdefault("scrollbar_button_color", c["border_strong"])
+    kwargs.setdefault("scrollbar_button_hover_color", c["text_faint"])
     sf = ctk.CTkScrollableFrame(parent, **kwargs)
     with contextlib.suppress(Exception):
         sf._scrollbar.configure(width=10)
@@ -135,3 +135,24 @@ def progress_dots(parent, total, done):
         dot = ctk.CTkFrame(f, width=10, height=10, corner_radius=5, fg_color=col)
         dot.pack(side="left", padx=3)
     return f
+
+def wheel_para_scroll(scroll, *widgets):
+    """Redireciona a roda do mouse sobre `widgets` para o CTkScrollableFrame.
+
+    CTkScrollableFrame ignora o wheel quando o ponteiro está sobre um
+    CTkTextbox (o widget consome o evento), o que trava a rolagem em telas
+    feitas de campos de texto — ex.: preenchimento manual.
+    """
+    canvas = scroll._parent_canvas
+
+    def _rolar(event):
+        para_cima = getattr(event, "num", 0) == 4 or getattr(event, "delta", 0) > 0
+        canvas.yview_scroll(-1 if para_cima else 1, "units")
+        return "break"
+
+    for widget in widgets:
+        for alvo in (widget, getattr(widget, "_textbox", None)):
+            if alvo is None:
+                continue
+            for sequencia in ("<Button-4>", "<Button-5>", "<MouseWheel>"):
+                alvo.bind(sequencia, _rolar, add="+")

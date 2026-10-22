@@ -1,9 +1,16 @@
 """Tests for config module"""
 import os
+
 from config import (
-    VERSAO, PASTA_APP, MODELO_EXTENSOES, ANEXO_EXTENSOES,
-    TESSERACT_LANG, PASTA_MODELOS, REGISTRO_MODELOS,
-    LIGHT_THEME, DARK_THEME,
+    ANEXO_EXTENSOES,
+    DARK_THEME,
+    LIGHT_THEME,
+    MODELO_EXTENSOES,
+    PASTA_APP,
+    PASTA_MODELOS,
+    REGISTRO_MODELOS,
+    TESSERACT_LANG,
+    VERSAO,
 )
 
 
@@ -14,6 +21,13 @@ def test_versao_is_string():
 
 def test_pasta_app_is_absolute():
     assert os.path.isabs(PASTA_APP)
+
+
+def test_pasta_app_respeita_variavel_de_ambiente(monkeypatch, tmp_path):
+    from config import _resolver_pasta_app
+    alvo = tmp_path / "dados-autodoc"
+    monkeypatch.setenv("AUTODOC_DATA_DIR", str(alvo))
+    assert _resolver_pasta_app() == str(alvo)
 
 
 def test_modelo_extensions_include_odt_docx():

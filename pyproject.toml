@@ -1,6 +1,6 @@
 [project]
 name = "autodoc-ctk"
-version = "4.0.1"
+version = "4.0.2"
 description = "AutoDoc - Gerador automático de documentos com OCR"
 requires-python = ">=3.10"
 license = "MIT"

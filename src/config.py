@@ -8,7 +8,14 @@ import os
 VERSAO = "4.0-premium"
 
 # Pasta do usuário para salvar configurações
-PASTA_APP = os.path.expanduser("~/.autodoc")
+def _resolver_pasta_app() -> str:
+    """Permite que o snap redirecione os dados para $SNAP_USER_COMMON."""
+    return os.path.abspath(os.path.expanduser(
+        os.environ.get("AUTODOC_DATA_DIR", "~/.autodoc")
+    ))
+
+
+PASTA_APP = _resolver_pasta_app()
 
 # Formatos suportados para MODELO (documento com placeholders)
 MODELO_EXTENSOES = {
