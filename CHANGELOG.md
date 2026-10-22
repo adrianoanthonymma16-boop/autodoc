@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Aba Lote com mapeamento em duas colunas e ações sempre visíveis
 - Barra de rolagem invisível em painéis escuros
 - Geração e extração não travam mais a interface (threads com retorno para a UI)
+- Placeholders dentro de formas (caixas de texto) do DOCX e do ODT agora são detectados e preenchidos
 
 ## [3.9.0] - 2026-07-14
 

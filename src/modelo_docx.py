@@ -7,6 +7,8 @@ import re
 
 try:
     from docx import Document
+    from docx.oxml.ns import qn
+    from docx.text.paragraph import Paragraph
     DOCX_SUPORTADO = True
 except ImportError as _e:
     DOCX_SUPORTADO = False
@@ -40,6 +42,30 @@ def _partes_cabecalho_rodape(section):
     return partes
 
 
+def _paragrafos_recursivos(raiz, pai):
+    """Percorre todos os w:p do XML, inclusive dentro de formas e controles.
+
+    python-docx só expõe os parágrafos do corpo/tabelas/cabeçalhos; textos
+    dentro de caixas de texto (w:txbxContent) e controles de conteúdo
+    (w:sdtContent) ficam de fora. Aqui varremos o XML e reaproveitamos a
+    mesma lógica de runs/estilo.
+    """
+    if raiz is None:
+        return
+    for elemento in raiz.iter(qn("w:p")):
+        yield Paragraph(elemento, pai)
+
+
+def _paragrafos_documento(doc):
+    """Parágrafos do corpo (formas, controles, tabelas) e cabeçalhos/rodapés."""
+    yield from _paragrafos_recursivos(doc.element.body, doc)
+
+    for section in doc.sections:
+        for parte in _partes_cabecalho_rodape(section):
+            if parte is not None:
+                yield from _paragrafos_recursivos(parte._element, parte)
+
+
 def _text_from_paragraph(paragraph):
     """Concatena runs para detectar placeholders divididos"""
     return "".join(run.text for run in paragraph.runs)
@@ -67,19 +93,20 @@ def _replace_in_paragraph(paragraph, dados):
     if new_text == full:
         return False
 
-    # Redistribui: limpa runs e cria um run com estilo do primeiro
-    if paragraph.runs:
-        style = paragraph.runs[0].style
-        bold = paragraph.runs[0].bold
-        italic = paragraph.runs[0].italic
-        underline = paragraph.runs[0].underline
-        font_name = paragraph.runs[0].font.name
-        font_size = paragraph.runs[0].font.size
-        color = paragraph.runs[0].font.color.rgb if paragraph.runs[0].font.color else None
-        # limpa
-        for _ in range(len(paragraph.runs)):
-            p = paragraph.runs[0]
-            p._element.getparent().remove(p._element)
+    # Redistribui: limpa apenas runs de texto, preservando desenhos/formas
+    # ancorados no mesmo parágrafo.
+    runs_texto = [r for r in paragraph.runs if r.text]
+    if runs_texto:
+        base = runs_texto[0]
+        style = base.style
+        bold = base.bold
+        italic = base.italic
+        underline = base.underline
+        font_name = base.font.name
+        font_size = base.font.size
+        color = base.font.color.rgb if base.font.color else None
+        for r in runs_texto:
+            r._element.getparent().remove(r._element)
         run = paragraph.add_run(new_text)
         try:
             run.style = style
@@ -106,27 +133,10 @@ def extrair_placeholders_docx(caminho_docx):
     placeholders = set()
     doc = Document(caminho_docx)
 
-    for paragraph in doc.paragraphs:
+    for paragraph in _paragrafos_documento(doc):
         text = _text_from_paragraph(paragraph)
         for match in PLACEHOLDER_RE.findall(text):
             placeholders.add(match.strip())
-
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for paragraph in cell.paragraphs:
-                    text = _text_from_paragraph(paragraph)
-                    for match in PLACEHOLDER_RE.findall(text):
-                        placeholders.add(match.strip())
-
-    # Também cobre headers/footers
-    for section in doc.sections:
-        for hdr in _partes_cabecalho_rodape(section):
-            if hdr:
-                for p in hdr.paragraphs:
-                    text = _text_from_paragraph(p)
-                    for match in PLACEHOLDER_RE.findall(text):
-                        placeholders.add(match.strip())
 
     return placeholders
 
@@ -137,23 +147,9 @@ def gerar_docx_preenchido(caminho_modelo, dados, caminho_saida):
 
     doc = Document(caminho_modelo)
 
-    for paragraph in doc.paragraphs:
+    for paragraph in _paragrafos_documento(doc):
         _replace_in_paragraph(paragraph, dados)
 
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for paragraph in cell.paragraphs:
-                    _replace_in_paragraph(paragraph, dados)
-
-    for section in doc.sections:
-        for hdr in _partes_cabecalho_rodape(section):
-            if hdr:
-                for p in hdr.paragraphs:
-                    _replace_in_paragraph(p, dados)
-
-    # hyperlinks e outros: fallback varrendo XML cru
-    # (mantém compatibilidade)
     doc.save(caminho_saida)
 
 
