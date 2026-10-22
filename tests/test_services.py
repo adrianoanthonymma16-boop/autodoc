@@ -247,6 +247,23 @@ class TestMapeamentoServiceExtras:
             else:
                 assert entry["mapeamento"]["PH1"] == {"x1": 5, "y1": 5, "x2": 15, "y2": 15}
 
+    def test_adicionar_confirmado_guarda_valor_e_confianca(self, state):
+        svc = MapeamentoService(state)
+        svc.adicionar_confirmado(
+            "PH1", "doc.pdf", "pdf", 10, 20, 100, 50,
+            valor="Maria", confianca=91.5,
+        )
+        assert state.mapeamento["PH1"]["x1"] == 10
+        assert state.dados_extraidos["PH1"] == "Maria"
+        assert state.confianca_ocr["PH1"] == 91.5
+        assert state.lote_fontes[0]["mapeamento"]["PH1"]["x2"] == 100
+
+    def test_adicionar_confirmado_sem_valor(self, state):
+        svc = MapeamentoService(state)
+        svc.adicionar_confirmado("PH1", "doc.pdf", "pdf", 0, 0, 10, 10)
+        assert "PH1" in state.mapeamento
+        assert "PH1" not in state.dados_extraidos
+
     def test_sync_lote_multiplos_placeholders_independentes(self, state):
         svc = MapeamentoService(state)
         svc.adicionar("PH1", "doc_a.pdf", "pdf", 0, 0, 10, 10)

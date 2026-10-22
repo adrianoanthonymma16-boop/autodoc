@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - **Confiança de OCR** — cada campo mostra a confiança da leitura e destaca os duvidosos
 - **Seletor de arquivos próprio** — no tema do app, com locais rápidos, filtros e arquivos com "." ocultos
 - **Avisos e confirmações próprios** — diálogos tematizados no lugar dos messageboxes do Tk
+- **Seleção visual com confirmação** — a área do campo é escolhida em janela própria com o documento inteiro; o OCR mostra o valor extraído para confirmar ou editar antes de salvar
 - **Snap** — pacote publicado na Snap Store
 
 ### Fixed

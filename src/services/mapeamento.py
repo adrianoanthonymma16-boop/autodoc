@@ -34,6 +34,20 @@ class MapeamentoService:
         self._sync_lote(placeholder, doc_path, doc_tipo, x1, y1, x2, y2)
         self.state.notify('mapeamento')
 
+    def adicionar_confirmado(
+        self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2,
+        valor=None, confianca=None,
+    ):
+        """Salva o mapeamento já com o valor confirmado pelo usuário.
+
+        O valor confirmado passa a ser o dado extraído do campo, evitando que
+        a próxima extração dependa apenas do OCR.
+        """
+        if valor is not None:
+            self.state.dados_extraidos[placeholder] = valor
+            self.state.confianca_ocr[placeholder] = confianca
+        self.adicionar(placeholder, doc_path, doc_tipo, x1, y1, x2, y2)
+
     def _sync_lote(self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2):
         mapping = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
         # um placeholder vive em exatamente um documento do lote: remove

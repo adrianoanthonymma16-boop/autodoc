@@ -7,6 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
+from config import CONF_BOA, CONF_MEDIA
 from fichas import listar_fichas, obter_ficha, salvar_ficha
 from historico import adicionar_ao_historico
 from logger import log_erro, log_info
@@ -18,10 +19,6 @@ from ui.file_dialog import escolher_pasta, salvar_arquivo
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
 from validadores_extra import sugerir_validacao, validar_campo
-
-# limiares de confiança de OCR (0..100)
-CONF_BOA = 80.0
-CONF_MEDIA = 55.0
 
 
 class GerarView(ctk.CTkFrame):

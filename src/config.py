@@ -7,6 +7,10 @@ import os
 # Versão do app - 4.0 Premium Modular
 VERSAO = "4.0-premium"
 
+# Limiares de confiança de OCR (0..100)
+CONF_BOA = 80.0
+CONF_MEDIA = 55.0
+
 # Pasta do usuário para salvar configurações
 def _resolver_pasta_app() -> str:
     """Permite que o snap redirecione os dados para $SNAP_USER_COMMON."""

@@ -13,10 +13,11 @@ from ui.theme import get_colors
 
 
 class ImageCanvas(ctk.CTkFrame):
-    def __init__(self, parent, on_rect_done=None, **kwargs):
+    def __init__(self, parent, on_rect_done=None, permitir_selecao=True, **kwargs):
         super().__init__(parent, **kwargs)
         c = get_colors()
         self.on_rect_done = on_rect_done
+        self.permitir_selecao = permitir_selecao
         self.imagem_original = None
         self.imagem_tk = None
         self.imagem_resized = None
@@ -126,15 +127,16 @@ class ImageCanvas(ctk.CTkFrame):
 
     # --- retângulo ---
     def _on_press(self, e):
-        if self._is_panning:
+        if self._is_panning or not self.permitir_selecao:
             return
         if not self.imagem_original:
             return
+        self.limpar_selecao()
         x=self.canvas.canvasx(e.x)
         y=self.canvas.canvasy(e.y)
         self._start=(x,y)
         c = get_colors()
-        self._rect_id=self.canvas.create_rectangle(x,y,x,y, outline=c["primary"], width=2, dash=(6,4))
+        self._rect_id=self.canvas.create_rectangle(x,y,x,y, outline=c["primary"], width=2, dash=(6,4), tags=("selecao",))
 
     def _on_drag(self, e):
         if self._rect_id and self._start:
@@ -169,6 +171,26 @@ class ImageCanvas(ctk.CTkFrame):
             self.canvas.delete(self._rect_id)
         self._rect_id=None
         self._start=None
+
+    def limpar_selecao(self):
+        self.canvas.delete("selecao")
+        self._rect_id = None
+        self._start = None
+
+    def fit_to_view(self, largura=None, altura=None):
+        """Ajusta o zoom para caber a imagem inteira na área visível."""
+        if not self.imagem_original:
+            return
+        self.update_idletasks()
+        escala = ScalingTracker.get_window_scaling(self) or 1.0
+        largura = largura or max(1, self.canvas.winfo_width() - 6)
+        altura = altura or max(1, self.canvas.winfo_height() - 6)
+        escala_x = self.imagem_original.width * escala
+        escala_y = self.imagem_original.height * escala
+        self.zoom = max(0.1, min(largura / escala_x, altura / escala_y, 3.0))
+        self.pan_x = 0
+        self.pan_y = 0
+        self._redraw()
 
     def draw_rects(self, rects, color=None, label_color=None):
         """rects: list of dict x1,y1,x2,y2 + label"""
