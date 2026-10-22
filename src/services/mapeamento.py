@@ -14,7 +14,7 @@ class MapeamentoService:
         self.state = state
 
     # --- core ---
-    def adicionar(self, placeholder: str, doc_path: str, doc_tipo: str, x1: int, y1: int, x2: int, y2: int):
+    def adicionar(self, placeholder: str, doc_path: str, doc_tipo: str, x1: int, y1: int, x2: int, y2: int, pagina: int = 0):
         # undo handling
         if placeholder in self.state.mapeamento:
             self.state.undo_stack.append({
@@ -29,14 +29,15 @@ class MapeamentoService:
         self.state.mapeamento[placeholder] = {
             'documento_path': doc_path,
             'documento_tipo': doc_tipo,
-            'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2
+            'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
+            'pagina': pagina,
         }
-        self._sync_lote(placeholder, doc_path, doc_tipo, x1, y1, x2, y2)
+        self._sync_lote(placeholder, doc_path, doc_tipo, x1, y1, x2, y2, pagina)
         self.state.notify('mapeamento')
 
     def adicionar_confirmado(
         self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2,
-        valor=None, confianca=None,
+        valor=None, confianca=None, pagina: int = 0,
     ):
         """Salva o mapeamento já com o valor confirmado pelo usuário.
 
@@ -46,10 +47,10 @@ class MapeamentoService:
         if valor is not None:
             self.state.dados_extraidos[placeholder] = valor
             self.state.confianca_ocr[placeholder] = confianca
-        self.adicionar(placeholder, doc_path, doc_tipo, x1, y1, x2, y2)
+        self.adicionar(placeholder, doc_path, doc_tipo, x1, y1, x2, y2, pagina)
 
-    def _sync_lote(self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2):
-        mapping = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+    def _sync_lote(self, placeholder, doc_path, doc_tipo, x1, y1, x2, y2, pagina=0):
+        mapping = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'pagina': pagina}
         # um placeholder vive em exatamente um documento do lote: remove
         # a entrada antiga dos demais docs antes de mover para o destino
         for entry in self.state.lote_fontes:

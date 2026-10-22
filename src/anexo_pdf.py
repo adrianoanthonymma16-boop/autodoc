@@ -1,5 +1,5 @@
 """
-Módulo para converter PDF em imagem (primeira página)
+Módulo para converter PDF em imagem (todas as páginas ou uma específica)
 """
 
 import contextlib
@@ -12,37 +12,52 @@ try:
 except ImportError:
     PDF_SUPORTADO = False
 
+# Limite de páginas renderizadas para não estourar a memória em PDFs gigantes
+MAX_PAGINAS = 30
 
-def pdf_para_imagem(caminho_pdf):
-    """
-    Converte a primeira página de um PDF para imagem PIL
 
-    Args:
-        caminho_pdf (str): Caminho do arquivo PDF
-
-    Returns:
-        PIL.Image: Primeira página como imagem
-
-    Raises:
-        Exception: Se pypdfium2 não estiver instalado ou PDF inválido
-    """
+def _validar(caminho_pdf):
     if not PDF_SUPORTADO:
         raise Exception("Suporte a PDF não disponível. Instale: pip install pypdfium2")
-
     if not os.path.exists(caminho_pdf):
         raise Exception(f"Arquivo não encontrado: {caminho_pdf}")
 
-    # Abre o PDF (garante fechamento mesmo em erro)
+
+def _renderizar(pagina):
+    bitmap = pagina.render(scale=2)
+    try:
+        # copy() desacopla do buffer do pypdfium2, que é liberado no close()
+        return bitmap.to_pil().copy()
+    finally:
+        with contextlib.suppress(Exception):
+            bitmap.close()
+
+
+def pdf_para_imagens(caminho_pdf, limite=MAX_PAGINAS):
+    """Converte as páginas de um PDF para imagens PIL (na ordem do documento)."""
+    _validar(caminho_pdf)
     pdf = pdfium.PdfDocument(caminho_pdf)
     try:
-        if len(pdf) == 0:
+        total = len(pdf)
+        if total == 0:
             raise Exception("PDF vazio")
-        # Pega a primeira página
-        page = pdf[0]
-        # Renderiza como imagem (scale=2 = aproximadamente 150 DPI)
-        bitmap = page.render(scale=2)
-        imagem = bitmap.to_pil()
-        return imagem
+        return [_renderizar(pdf[i]) for i in range(min(total, limite))]
+    finally:
+        with contextlib.suppress(Exception):
+            pdf.close()
+
+
+def pdf_para_imagem(caminho_pdf, pagina=0):
+    """Converte uma página (índice 0-based) de um PDF para imagem PIL."""
+    _validar(caminho_pdf)
+    pdf = pdfium.PdfDocument(caminho_pdf)
+    try:
+        total = len(pdf)
+        if total == 0:
+            raise Exception("PDF vazio")
+        if pagina < 0 or pagina >= total:
+            raise Exception(f"Página {pagina + 1} inexistente (PDF tem {total})")
+        return _renderizar(pdf[pagina])
     finally:
         with contextlib.suppress(Exception):
             pdf.close()

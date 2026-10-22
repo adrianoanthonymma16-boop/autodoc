@@ -1,9 +1,9 @@
 """
-Janela de seleção visual: documento inteiro, recorte e confirmação do valor.
+Janela de seleção visual: todas as páginas dos documentos anexados.
 
 Fluxo:
-1. Abre em janela própria com a página inteira ajustada à tela.
-2. Usuário arrasta sobre a região do placeholder.
+1. Abre em janela própria com as páginas empilhadas (scroll vertical).
+2. Usuário arrasta sobre a região do placeholder, em qualquer página.
 3. OCR roda em thread e o valor volta num campo editável.
 4. Usuário confirma (salva o mapeamento) ou edita manualmente antes.
 5. Com vários campos pendentes, "Salvar e próximo" avança na mesma janela,
@@ -23,40 +23,41 @@ from ui import messagebox
 from ui.canvas.image_canvas import ImageCanvas
 from ui.components.widgets import card
 from ui.icons import get as get_icon
+from ui.selection_pages import (
+    CABECALHO,
+    montar_composto,
+    pagina_do_retangulo,
+    recorte_local,
+    retangulo_composto,
+)
 from ui.theme import FONTS, get_colors
 
 
 class RegionWindow(ctk.CTkToplevel):
-    def __init__(
-        self,
-        parent,
-        imagem,
-        placeholders,
-        documento_nome,
-        retangulos=None,
-        on_confirm=None,
-    ):
+    def __init__(self, parent, documentos, placeholders, retangulos=None, on_confirm=None):
         super().__init__(parent)
-        self.imagem = imagem
         self.placeholders = list(placeholders)
-        self.documento_nome = documento_nome
+        self.documentos = documentos
         self.on_confirm = on_confirm
         self._refs = [dict(r) for r in (retangulos or [])]
+        self._alvo = None
         self.indice = 0
         self._salvos = 0
-        self._rect = None
-        self._confianca = None
         self._seq = 0
         self._ocr_fila = queue.Queue()
+
+        self.composto, self.paginas = montar_composto(documentos)
+        nomes = {r.get('label') for r in self._refs if r.get('label')}
+        self._confirmados = len(nomes)
 
         c = get_colors()
         self.title(f"Selecionar área de {self.placeholders[0]}")
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
-        largura = min(1400, int(sw * 0.92))
-        altura = min(900, int(sh * 0.90))
+        largura = min(1500, int(sw * 0.92))
+        altura = min(950, int(sh * 0.92))
         self.geometry(f"{largura}x{altura}+{(sw - largura) // 2}+{(sh - altura) // 2}")
-        self.minsize(900, 560)
+        self.minsize(900, 600)
         self.bind("<Escape>", lambda e: self.destroy())
 
         cab = ctk.CTkFrame(self, fg_color="transparent")
@@ -97,10 +98,10 @@ class RegionWindow(ctk.CTkToplevel):
         self.painel = ctk.CTkFrame(self, fg_color="transparent")
         self.painel.pack(fill="x", padx=18, pady=(0, 12))
 
-        self.canvas.set_image(imagem)
+        self.canvas.set_image(self.composto)
         self._aplicar_overlays()
         self._atualizar_cabecalho()
-        self.after(250, self.canvas.fit_to_view)
+        self.after(250, self.canvas.fit_to_width)
         self.after(150, self._tornar_modal)
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         self._poll_ocr()
@@ -114,30 +115,57 @@ class RegionWindow(ctk.CTkToplevel):
     def _placeholder(self):
         return self.placeholders[self.indice]
 
-    def _atualizar_cabecalho(self):
+    def _atualizar_cabecalho(self, confirmados=None):
         ph = self._placeholder()
         total = len(self.placeholders)
+        confirmados = self._confirmados if confirmados is None else confirmados
         self.lbl_titulo.configure(text=f"Selecione a área de {{{ph}}}")
         self.lbl_sub.configure(
             text=(
-                f"{self.documento_nome} — campo {self.indice + 1} de {total}. "
-                "Arraste sobre o valor; depois confirme ou edite o texto lido."
+                f"Campo {self.indice + 1} de {total} · {confirmados} já confirmado"
+                f"{'s' if confirmados != 1 else ''}. Role para ver as próximas páginas; "
+                "arraste sobre o valor e confirme ou edite o texto lido."
             )
         )
-        self.lbl_status.configure(text="Arraste sobre o valor para selecionar a área.")
+        self.lbl_status.configure(text="Arraste sobre o valor em qualquer página.")
         self.title(f"Selecionar área de {ph}")
+
+    def _refs_compostas(self):
+        por_chave = {(p['documento_path'], p['pagina']): p for p in self.paginas}
+        resultado = []
+        for r in self._refs:
+            chave = (r.get('documento_path'), r.get('pagina', 0))
+            pagina = por_chave.get(chave)
+            if pagina is None:
+                continue
+            base = retangulo_composto(pagina, r['x1'], r['y1'], r['x2'], r['y2'])
+            base['label'] = f"✓ {r['label']}" if r.get('label') else ""
+            resultado.append(base)
+        return resultado
 
     def _aplicar_overlays(self):
         c = get_colors()
 
         def overlay(cv):
-            cv.draw_rects(self._refs, color=c["success"], label_color=c["success"])
+            cv.draw_rects(self._refs_compostas(), color=c["success"], label_color=c["success"])
+            if not cv.imagem_original or not cv.imagem_resized:
+                return
+            sx = cv.imagem_resized.width / cv.imagem_original.width
+            sy = cv.imagem_resized.height / cv.imagem_original.height
+            for pagina in self.paginas:
+                x = pagina['x'] * sx + cv.pan_x
+                y = (pagina['y'] - CABECALHO) * sy + cv.pan_y
+                nome = pagina['documento_nome'] or 'documento'
+                texto = f"{nome} — página {pagina['pagina'] + 1} de {pagina['total_paginas']}"
+                cv.canvas.create_text(
+                    x, y, text=texto, anchor="sw", fill=c["text_muted"],
+                    font=("Inter", 9, "bold"),
+                )
 
         self.canvas.set_overlays([overlay])
 
     def _iniciar_campo(self):
-        self._rect = None
-        self._confianca = None
+        self._alvo = None
         self.canvas.permitir_selecao = True
         self.canvas.limpar_selecao()
         self._limpar_painel()
@@ -148,13 +176,18 @@ class RegionWindow(ctk.CTkToplevel):
     def _on_rect(self, x1, y1, x2, y2):
         if x2 - x1 < 4 or y2 - y1 < 4:
             return
+        pagina = pagina_do_retangulo(self.paginas, x1, y1, x2, y2)
+        local = recorte_local(pagina, x1, y1, x2, y2) if pagina else None
+        if pagina is None or local is None:
+            self.lbl_status.configure(text="Selecione a área dentro de uma página.")
+            self.canvas.limpar_selecao()
+            return
         self._seq += 1
         seq = self._seq
-        self._rect = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
-        self._confianca = None
+        self._alvo = {'pagina': pagina, 'local': local}
         self._limpar_painel()
         self.lbl_status.configure(text="Lendo a região com OCR…")
-        recorte = self.imagem.crop((x1, y1, x2, y2))
+        recorte = pagina['imagem'].crop(local)
         threading.Thread(
             target=self._ler_recorte, args=(recorte, seq), daemon=True
         ).start()
@@ -281,9 +314,12 @@ class RegionWindow(ctk.CTkToplevel):
         self.entrada.focus_set()
         self.entrada.icursor("end")
 
+    def _mapeados(self):
+        return {r.get('label') for r in self._refs if r.get('label')}
+
     # --- ações ---
     def _confirmar(self):
-        if not self._rect:
+        if not self._alvo:
             return
         ph = self._placeholder()
         valor = self.entrada.get().strip()
@@ -292,11 +328,24 @@ class RegionWindow(ctk.CTkToplevel):
             f"O campo '{ph}' ficará vazio. Confirmar mesmo assim?",
         ):
             return
+        pagina = self._alvo['pagina']
+        local = self._alvo['local']
         if self.on_confirm:
-            self.on_confirm(ph, self._rect, valor, self._confianca)
-        self._refs = [r for r in self._refs if r.get("label") != ph]
-        self._refs.append({**self._rect, "label": ph})
+            doc = {
+                'caminho': pagina['documento_path'],
+                'nome': pagina['documento_nome'],
+                'tipo': pagina['documento_tipo'],
+            }
+            self.on_confirm(ph, doc, pagina['pagina'], local, valor, self._confianca)
+        self._refs = [r for r in self._refs if r.get('label') != ph]
+        self._refs.append({
+            'documento_path': pagina['documento_path'],
+            'pagina': pagina['pagina'],
+            'x1': local[0], 'y1': local[1], 'x2': local[2], 'y2': local[3],
+            'label': ph,
+        })
         self._salvos += 1
+        self._confirmados = len(self._mapeados())
         self.indice += 1
         if self.indice < len(self.placeholders):
             self._iniciar_campo()
@@ -304,7 +353,7 @@ class RegionWindow(ctk.CTkToplevel):
             self._mostrar_resumo()
 
     def _selecionar_de_novo(self):
-        self._rect = None
+        self._alvo = None
         self._limpar_painel()
         self.canvas.limpar_selecao()
         self.lbl_status.configure(text="Arraste novamente sobre o valor.")
@@ -318,14 +367,14 @@ class RegionWindow(ctk.CTkToplevel):
         self.lbl_titulo.configure(text="Seleção concluída")
         n = self._salvos
         self.lbl_sub.configure(
-            text=f"{n} campo{'s' if n != 1 else ''} mapeado{'s' if n != 1 else ''} em {self.documento_nome}."
+            text=f"{n} campo{'s' if n != 1 else ''} mapeado{'s' if n != 1 else ''} nesta seleção."
         )
         self.lbl_status.configure(text="Você pode fechar a janela ou remapear clicando na lista.")
         box = card(self.painel)
         box.pack(fill="x")
         ctk.CTkLabel(
             box,
-            text=f"{n} campo{'s' if n != 1 else ''} confirmado{'s' if n != 1 else ''} neste documento.",
+            text=f"{n} campo{'s' if n != 1 else ''} confirmado{'s' if n != 1 else ''}.",
             font=FONTS["body"], text_color=c["success"],
         ).pack(side="left", padx=12, pady=12)
         ctk.CTkButton(
@@ -339,4 +388,4 @@ class RegionWindow(ctk.CTkToplevel):
             hover_color=c["success_hover"],
             text_color=c["text_on_primary"],
             command=self.destroy,
-        ).pack(side="right", padx=12, pady=8)
+        ).pack(side="right", padx=12)

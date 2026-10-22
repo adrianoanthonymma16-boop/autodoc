@@ -4,6 +4,7 @@ MapeamentoView - campos, documentos e mapeamentos confirmados.
 A seleção da área acontece em janela própria (RegionWindow); a lista de
 mapeamentos é a área principal e permite remapear com um clique.
 """
+import contextlib
 import os
 
 import customtkinter as ctk
@@ -185,6 +186,11 @@ class MapeamentoView(ctk.CTkFrame):
             pref="✓" if mapped else "○"
             lbl=ctk.CTkLabel(row, text=f"{pref}  {{{{{ph}}}}}", font=FONTS["body_small"], text_color=fg)
             lbl.pack(side="left", padx=10, pady=6)
+            if mapped:
+                confirmado = self.state.dados_extraidos.get(ph, "")
+                badge_txt = "confirmado" if confirmado else "mapeado"
+                badge_cor = c["success"] if confirmado else c["warning"]
+                ctk.CTkLabel(row, text=badge_txt, font=FONTS["caption"], text_color=badge_cor).pack(side="right", padx=10)
             lbl.bind("<Button-1>", lambda e, p=ph: self._select_ph(p))
             row.bind("<Button-1>", lambda e, p=ph: self._select_ph(p))
 
@@ -240,52 +246,59 @@ class MapeamentoView(ctk.CTkFrame):
         ok, msg=self.doc_svc.anexar(caminho)
         if not ok:
             messagebox.showerror("Erro", msg)
-        else:
-            # auto seleciona se primeiro
-            if not self.state.documento_atual_path:
-                self.state.documento_atual_path=caminho
-                self.state.documento_tipo=self.state.documentos_anexados[-1]['tipo']
-                self._render_all()
+            return
+        doc = self.state.documentos_anexados[-1]
+        self.state.documento_atual_path = caminho
+        self.state.documento_tipo = doc['tipo']
+        if not self.state.placeholder_atual:
+            pendentes = sequencia_pendente(
+                self.state.placeholders, self.state.mapeamento, None
+            )
+            if pendentes:
+                self.state.placeholder_atual = pendentes[0]
+        self._render_all()
+        # abre a janela de seleção em outra janela logo após anexar
+        self.after(150, self._abrir_selecao)
 
     def _abrir_selecao(self):
         ph = self.state.placeholder_atual
         if not ph:
             messagebox.showwarning("Aviso","Selecione o campo primeiro")
             return
-        if not self.state.documento_atual_path:
-            messagebox.showwarning("Aviso","Selecione o documento")
+        if not self.state.documentos_anexados:
+            messagebox.showwarning("Aviso","Anexe um documento primeiro")
             return
-        doc = next(
-            (d for d in self.state.documentos_anexados
-             if d['caminho'] == self.state.documento_atual_path),
-            None,
-        )
-        if doc is None:
-            messagebox.showwarning("Aviso","Documento não encontrado")
-            return
+        anterior = getattr(self, "_region_win", None)
+        if anterior is not None:
+            with contextlib.suppress(Exception):
+                if anterior.winfo_exists():
+                    anterior.destroy()
         refs = [
-            {'x1': d['x1'], 'y1': d['y1'], 'x2': d['x2'], 'y2': d['y2'], 'label': p}
+            {
+                'documento_path': d['documento_path'],
+                'pagina': d.get('pagina', 0),
+                'x1': d['x1'], 'y1': d['y1'], 'x2': d['x2'], 'y2': d['y2'],
+                'label': p,
+            }
             for p, d in self.state.mapeamento.items()
-            if d['documento_path'] == doc['caminho']
         ]
-        RegionWindow(
+        self._region_win = RegionWindow(
             self,
-            imagem=doc['imagem_original'],
+            documentos=self.state.documentos_anexados,
             placeholders=sequencia_pendente(
                 self.state.placeholders, self.state.mapeamento, ph
             ),
-            documento_nome=doc['nome'],
             retangulos=refs,
-            on_confirm=lambda ph2, rect, valor, conf: self._salvar_regiao(
-                ph2, doc, rect, valor, conf
+            on_confirm=lambda ph2, doc, pagina, rect, valor, conf: self._salvar_regiao(
+                ph2, doc, pagina, rect, valor, conf
             ),
         )
 
-    def _salvar_regiao(self, ph, doc, rect, valor, conf):
+    def _salvar_regiao(self, ph, doc, pagina, rect, valor, conf):
         self.map_svc.adicionar_confirmado(
             ph, doc['caminho'], doc['tipo'],
-            rect['x1'], rect['y1'], rect['x2'], rect['y2'],
-            valor=valor, confianca=conf,
+            rect[0], rect[1], rect[2], rect[3],
+            valor=valor, confianca=conf, pagina=pagina,
         )
         valor_txt = valor if len(valor) <= 40 else valor[:37] + "…"
         self.lbl_status.configure(

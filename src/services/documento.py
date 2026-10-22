@@ -6,7 +6,7 @@ import os
 from PIL import Image
 
 from anexo_heic import heic_para_imagem
-from anexo_pdf import pdf_para_imagem
+from anexo_pdf import pdf_para_imagens
 from validadores import validar_extensao
 
 
@@ -20,13 +20,16 @@ class DocumentoService:
             return False, msg
         try:
             if ext == '.pdf':
-                imagem = pdf_para_imagem(caminho)
+                paginas = pdf_para_imagens(caminho)
+                imagem = paginas[0]
                 tipo = 'pdf'
             elif ext == '.heic':
                 imagem = heic_para_imagem(caminho)
+                paginas = [imagem]
                 tipo = 'heic'
             else:
                 imagem = Image.open(caminho).convert("RGB")
+                paginas = [imagem]
                 tipo = 'imagem'
             # garante que não duplica
             for d in self.state.documentos_anexados:
@@ -36,7 +39,8 @@ class DocumentoService:
                 'caminho': caminho,
                 'nome': os.path.basename(caminho),
                 'tipo': tipo,
-                'imagem_original': imagem
+                'imagem_original': imagem,
+                'paginas': paginas,
             })
             self.state.notify('documentos')
             return True, f"Anexado: {os.path.basename(caminho)}"

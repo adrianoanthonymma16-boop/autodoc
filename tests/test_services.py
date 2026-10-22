@@ -245,7 +245,7 @@ class TestMapeamentoServiceExtras:
             if entry["documento_path"] == "doc_a.pdf":
                 assert "PH1" not in entry["mapeamento"]
             else:
-                assert entry["mapeamento"]["PH1"] == {"x1": 5, "y1": 5, "x2": 15, "y2": 15}
+                assert entry["mapeamento"]["PH1"] == {"x1": 5, "y1": 5, "x2": 15, "y2": 15, "pagina": 0}
 
     def test_adicionar_confirmado_guarda_valor_e_confianca(self, state):
         svc = MapeamentoService(state)
@@ -271,7 +271,7 @@ class TestMapeamentoServiceExtras:
         assert len(state.lote_fontes) == 1
         entry = state.lote_fontes[0]
         assert set(entry["mapeamento"].keys()) == {"PH1", "PH2"}
-        assert entry["mapeamento"]["PH1"] == {"x1": 0, "y1": 0, "x2": 10, "y2": 10}
+        assert entry["mapeamento"]["PH1"] == {"x1": 0, "y1": 0, "x2": 10, "y2": 10, "pagina": 0}
 
 
 # --- ExtracaoService: callbacks marshallizados (thread-safe Tk) ---

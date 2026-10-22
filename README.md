@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-4.0.3-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.4-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.3**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
+Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.4**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
 
 ---
 
@@ -24,7 +24,7 @@ Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digita
 - **Preenchimento Manual** — Digite valores diretamente nos placeholders, sem precisar de OCR
 - **OCR Inteligente** — Tesseract com pré-processamento avançado de imagem
 - **Biblioteca de Modelos** — Salve e reutilize templates frequentes com um clique
-- **Mapeamento Visual** — Selecione a área em janela própria, com OCR e confirmação do valor lido antes de salvar
+- **Mapeamento Visual** — Janela própria com todas as páginas do documento empilhadas (scroll), OCR e confirmação visível do que já foi mapeado
 - **Modo Escuro** — Alternância instantânea com um botão (Ctrl+D)
 - **Atalhos de Teclado** — Ctrl+O (modelo), Ctrl+A (anexar), Ctrl+G (gerar), Ctrl+S (salvar), Ctrl+Z (desfazer), Ctrl+E (exportar), Ctrl+I (importar)
 - **Zoom e Pan** — Ctrl+Scroll para zoom, botão do meio para arrastar
@@ -82,7 +82,7 @@ python3 run_ctk.py
 
 1. **Modelo** — Carregue um ODT/DOCX com `{{...}}` e/ou anexe mais modelos ao lote
 2. **Modelos Salvos** — (opcional) Salve na biblioteca para reuso
-3. **Anexar e Mapear** — Anexe fotos/PDFs e selecione a área de cada campo; a janela percorre os campos pendentes do documento
+3. **Anexar e Mapear** — Anexe fotos/PDFs; a janela de seleção abre sozinha, empilha as páginas e percorre os campos pendentes
 4. **Gerar Documento** — Extraia via OCR, revise, gere o(s) documento(s) final(is)
 5. **Histórico** — Consulte os documentos gerados anteriormente
 
@@ -123,9 +123,9 @@ O snap já inclui o Tesseract com português e a fonte Inter. Os dados ficam em
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.3_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.4_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.3_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.4_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -143,7 +143,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.3_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.4_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -258,7 +258,7 @@ Principais problemas corrigidos na v4.0 (16 bugs):
 
 ## Versões
 
-### v4.0.3 (atual) — Seleção visual com confirmação
+### v4.0.4 (atual) — Seleção com páginas e confirmação visível
 - **Lote por planilha** — XLSX/CSV/TSV com sugestão automática de mapeamento e relatório por linha
 - **Fichas de dados** e **saída organizada** (pasta padrão, padrão de nome, subpasta por data)
 - **Pré-visualização** do documento gerado e **confiança por campo de OCR**
@@ -345,12 +345,12 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-4.0.3-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.4-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.3**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
+Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.4**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
 
 ---
 
@@ -369,7 +369,7 @@ Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — *
 - **Manual Filling** — Type values directly into placeholders, no OCR needed
 - **Smart OCR** — Tesseract with advanced image pre-processing
 - **Template Library** — Save and reuse frequent templates with one click
-- **Visual Mapping** — Pick each area in a dedicated window, with OCR and confirmation of the read value before saving
+- **Visual Mapping** — Dedicated window with every document page stacked (scroll), OCR and visible confirmation of mapped fields
 - **Dark Mode** — Instant toggle with a button (Ctrl+D)
 - **Keyboard Shortcuts** — Ctrl+O (template), Ctrl+A (attach), Ctrl+G (generate), Ctrl+S (save), Ctrl+Z (undo), Ctrl+E (export), Ctrl+I (import)
 - **Zoom and Pan** — Ctrl+Scroll to zoom, middle button to drag
@@ -468,13 +468,13 @@ The snap bundles Tesseract with Portuguese and the Inter font. Data lives in
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.3_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.4_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.3_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.4_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
@@ -510,7 +510,7 @@ autodoc/
 
 ## Versions
 
-### v4.0.3 (current) — Visual selection with confirmation
+### v4.0.4 (current) — Multi-page selection and visible confirmation
 - Spreadsheet batch (XLSX/CSV/TSV) with automatic column mapping and per-row report
 - Data profiles, organized output and document preview; per-field OCR confidence
 - Themed file picker and dialogs; hidden dotfiles stay out of the list

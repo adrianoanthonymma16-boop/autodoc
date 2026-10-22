@@ -14,6 +14,15 @@ class ExtracaoService:
     def __init__(self, state):
         self.state = state
 
+    @staticmethod
+    def _imagem_documento(doc_path, doc_tipo, pagina=0):
+        """Carrega a página certa do documento fonte (PDF multi-página)."""
+        if doc_tipo == 'pdf':
+            return pdf_para_imagem(doc_path, pagina)
+        if doc_tipo == 'heic':
+            return heic_para_imagem(doc_path)
+        return Image.open(doc_path)
+
     def extrair_todos(self, on_progress=None, on_done=None, on_error=None, marshal=None):
         """Roda em thread. Callbacks de UI (on_progress/on_error) devem ser
         marshallizados pelo caller (ex.: widget.after(0, ...)) via `marshal`
@@ -30,12 +39,11 @@ class ExtracaoService:
                 if ph in self.state.mapeamento:
                     dados = self.state.mapeamento[ph]
                     try:
-                        if dados['documento_tipo'] == 'pdf':
-                            imagem = pdf_para_imagem(dados['documento_path'])
-                        elif dados['documento_tipo'] == 'heic':
-                            imagem = heic_para_imagem(dados['documento_path'])
-                        else:
-                            imagem = Image.open(dados['documento_path'])
+                        imagem = self._imagem_documento(
+                            dados['documento_path'],
+                            dados['documento_tipo'],
+                            dados.get('pagina', 0),
+                        )
                         texto, conf = extrair_recorte_com_confianca(imagem, dados)
                         dados_temp[ph] = texto if texto else ""
                         conf_temp[ph] = conf if texto else 0.0
@@ -63,12 +71,9 @@ class ExtracaoService:
             if ph in entry['mapeamento']:
                 coords = entry['mapeamento'][ph]
                 try:
-                    if entry['documento_tipo'] == 'pdf':
-                        imagem = pdf_para_imagem(doc_path)
-                    elif entry['documento_tipo'] == 'heic':
-                        imagem = heic_para_imagem(doc_path)
-                    else:
-                        imagem = Image.open(doc_path)
+                    imagem = self._imagem_documento(
+                        doc_path, entry['documento_tipo'], coords.get('pagina', 0)
+                    )
                     dados_ocr = {'x1': coords['x1'], 'y1': coords['y1'], 'x2': coords['x2'], 'y2': coords['y2']}
                     texto, _conf = extrair_recorte_com_confianca(imagem, dados_ocr)
                     dados[ph] = texto if texto else ""

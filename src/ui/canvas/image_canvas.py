@@ -67,6 +67,8 @@ class ImageCanvas(ctk.CTkFrame):
         self.canvas.bind("<Control-Button-5>", lambda e: self.zoom_by(0.8))
         # also without ctrl? keep ctrl only
         self.canvas.bind("<MouseWheel>", self._on_wheel_scroll)  # scroll normal
+        self.canvas.bind("<Button-4>", lambda e: self.canvas.yview_scroll(-3, "units"))
+        self.canvas.bind("<Button-5>", lambda e: self.canvas.yview_scroll(3, "units"))
 
     def _on_wheel_scroll(self, e):
         # normal scroll
@@ -191,6 +193,19 @@ class ImageCanvas(ctk.CTkFrame):
         self.pan_x = 0
         self.pan_y = 0
         self._redraw()
+
+    def fit_to_width(self, maxima=1.0):
+        """Ajusta o zoom pela largura visível, preservando a rolagem vertical."""
+        if not self.imagem_original:
+            return
+        self.update_idletasks()
+        escala = ScalingTracker.get_window_scaling(self) or 1.0
+        largura = max(1, self.canvas.winfo_width() - 6)
+        self.zoom = max(0.1, min(largura / (self.imagem_original.width * escala), maxima))
+        self.pan_x = 0
+        self.pan_y = 0
+        self._redraw()
+        self.canvas.yview_moveto(0)
 
     def draw_rects(self, rects, color=None, label_color=None):
         """rects: list of dict x1,y1,x2,y2 + label"""

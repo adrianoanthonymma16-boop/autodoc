@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.4] - 2026-10-22
+
+### Fixed
+- **Janela de seleção ao anexar** — o documento anexado abre automaticamente a janela separada de mapeamento
+- **PDF com várias páginas** — todas as páginas são empilhadas com rolagem vertical; o próximo documento anexado continua no mesmo scroll
+- **Confirmação visível** — campo com valor confirmado mostra check verde e o selo "confirmado" na lista (e "mapeado" quando ainda não tem valor)
+- **Página no mapeamento** — cada recorte guarda a página de origem, e a extração OCR usa a página correta
+- **Retângulos de referência** — os mapeamentos já confirmados aparecem na janela com o nome do campo e contador de confirmados
+
 ## [4.0.3] - 2026-10-22
 
 ### Added
