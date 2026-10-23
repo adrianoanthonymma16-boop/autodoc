@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-4.0.6-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.7-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.6**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
+Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.7**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
 
 ---
 
@@ -123,9 +123,9 @@ O snap já inclui o Tesseract com português e a fonte Inter. Os dados ficam em
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.6_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.7_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.6_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.7_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -143,7 +143,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.6_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.7_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -258,7 +258,13 @@ Principais problemas corrigidos na v4.0 (16 bugs):
 
 ## Versões
 
-### v4.0.6 (atual) — placeholders em cabeçalhos, links e revisões
+### v4.0.7 (atual) — subpastas no seletor e home real no snap
+
+- **Seletor de modelos/pastas** — a barra lateral "Locais" agora é uma árvore: cada local abre as subpastas em um clique, e a árvore já vem aberta até a pasta atual
+- **Início apontava para a pasta errada no snap** — o seletor usava o HOME interno da revisão (`~/snap/autodoc-ctk/<rev>`), então só aparecia "Início" vazio; agora usa `$SNAP_REAL_HOME` e mostra Documentos, Downloads, Imagens e Área de Trabalho de verdade
+- **Comportamento fora do snap** — sem `$SNAP_REAL_HOME`, o home continua sendo o do usuário (nenhuma mudança)
+
+### v4.0.6 — placeholders em cabeçalhos, links e revisões
 
 - **DOCX** — placeholders em cabeçalhos/rodapés de primeira página e de páginas pares, dentro de hyperlinks, alterações controladas e controles de conteúdo passam a ser extraídos e preenchidos
 - **ODT** — cabeçalhos e rodapés (definidos em `styles.xml`) também entram na extração e no preenchimento
@@ -360,12 +366,12 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-4.0.6-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.7-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.6**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
+Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.7**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
 
 ---
 
@@ -483,13 +489,13 @@ The snap bundles Tesseract with Portuguese and the Inter font. Data lives in
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.6_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.7_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.6_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.7_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
@@ -525,7 +531,13 @@ autodoc/
 
 ## Versions
 
-### v4.0.6 (current) — placeholders in headers, links and revisions
+### v4.0.7 (current) — subfolders in the picker and real home in the snap
+
+- **Model/folder picker** — the "Locais" sidebar is now a tree: each location expands its subfolders in one click, and the tree opens down to the current folder
+- **Home pointed to the wrong folder in the snap** — the picker used the revision-internal HOME (`~/snap/autodoc-ctk/<rev>`), so only an empty "Início" appeared; it now uses `$SNAP_REAL_HOME` and shows the real Documents, Downloads, Pictures and Desktop
+- **Outside the snap** — without `$SNAP_REAL_HOME`, the user home is unchanged
+
+### v4.0.6 — placeholders in headers, links and revisions
 
 - **DOCX** — placeholders in first-page/even-page headers and footers, inside hyperlinks, tracked changes and content controls are now extracted and filled
 - **ODT** — headers and footers (defined in `styles.xml`) are included in extraction and filling

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.7] - 2026-10-23
+
+### Fixed
+- **Seletor: Início apontava para a pasta da revisão do snap** — `locais_rapidos()` e o diretório inicial usavam o HOME interno (`~/snap/autodoc-ctk/<rev>`), então só aparecia "Início" vazio e sem as pastas reais; agora usam `$SNAP_REAL_HOME` (com fallback para o home do usuário)
+- **Seletor: subpastas não apareciam na barra lateral** — "Locais" era uma lista fixa de atalhos; agora é uma árvore que expande as subpastas de cada local (uma pasta por clique) e abre automaticamente até o diretório atual
+- **Preferências** — diretórios padrão de modelo/anexo/saída também passam a usar o home real no snap
+
+### Added
+- Testes para `casa_do_usuario()` (snap e fora dele), `locais_rapidos()` com `$SNAP_REAL_HOME` e `subpastas()`
+- Ícone `chevron-down` (SVG) para o estado aberto da árvore
+
 ## [4.0.6] - 2026-10-23
 
 ### Fixed
