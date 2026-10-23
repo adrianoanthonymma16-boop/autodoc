@@ -46,18 +46,62 @@ def test_extrair_texto_com_confianca_limpeza(monkeypatch, _sem_preprocesso):
     assert conf == 90.0
 
 
-def test_extrair_texto_com_confianca_texto_curto(monkeypatch, _sem_preprocesso):
-    """Texto <= 2 chars retorna vazio, como extrair_texto_da_regiao."""
+def test_extrair_texto_com_confianca_preserva_texto_curto(monkeypatch, _sem_preprocesso):
+    """Valores curtos (UF, SIM, número) são dados válidos, não ruído."""
     monkeypatch.setattr(
         pytesseract, 'image_to_data',
         lambda img, lang=None, config=None, output_type=None: {
-            'text': ['ab'],
+            'text': ['MG'],
             'conf': [99],
         },
     )
     texto, conf = extrair_texto_com_confianca(object())
-    assert texto == ''
-    assert conf == 0.0
+    assert texto == 'MG'
+    assert conf == 99.0
+
+
+def test_extrair_texto_com_confianca_tenta_cinza_quando_vazio(monkeypatch, _sem_preprocesso):
+    """Se a binarização não ler nada, tenta a mesma região em escala de cinza."""
+    monkeypatch.setattr('ocr._para_cinza', lambda img: img)
+    chamadas = []
+
+    def fake(img, lang=None, config=None, output_type=None):
+        chamadas.append((img, config))
+        if len(chamadas) == 1:
+            return {'text': [], 'conf': []}
+        return {'text': ['JOAO'], 'conf': [80]}
+
+    monkeypatch.setattr(pytesseract, 'image_to_data', fake)
+    texto, _conf = extrair_texto_com_confianca(object())
+    assert texto == 'JOAO'
+    assert len(chamadas) == 2
+
+
+def test_extrair_texto_com_confianca_usa_psm7_na_ultima_tentativa(monkeypatch, _sem_preprocesso):
+    """Sem leitura em bloco, tenta segmentação de linha única."""
+    monkeypatch.setattr('ocr._para_cinza', lambda img: img)
+    chamadas = []
+
+    def fake(img, lang=None, config=None, output_type=None):
+        chamadas.append(config)
+        if len(chamadas) < 3:
+            return {'text': [], 'conf': []}
+        return {'text': ['LINHA'], 'conf': [70]}
+
+    monkeypatch.setattr(pytesseract, 'image_to_data', fake)
+    texto, _ = extrair_texto_com_confianca(object())
+    assert texto == 'LINHA'
+    assert 'psm 7' in chamadas[-1]
+
+
+def test_extrair_texto_com_confianca_propaga_erro(monkeypatch, _sem_preprocesso):
+    """Erro do Tesseract deve subir para a UI mostrar o motivo real."""
+    def fake(img, lang=None, config=None, output_type=None):
+        raise RuntimeError('tesseract não encontrado')
+
+    monkeypatch.setattr(pytesseract, 'image_to_data', fake)
+    with pytest.raises(RuntimeError, match='tesseract'):
+        extrair_texto_com_confianca(object())
 
 
 def test_extrair_texto_com_confianca_respeita_config(monkeypatch, _sem_preprocesso):

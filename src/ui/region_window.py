@@ -18,6 +18,7 @@ import customtkinter as ctk
 from PIL import Image
 
 from config import CONF_BOA, CONF_MEDIA
+from logger import log_erro
 from ocr import extrair_texto_com_confianca
 from ui import messagebox
 from ui.canvas.image_canvas import ImageCanvas
@@ -193,22 +194,23 @@ class RegionWindow(ctk.CTkToplevel):
         ).start()
 
     def _ler_recorte(self, recorte, seq):
-        texto, conf = "", 0.0
+        texto, conf, erro = "", 0.0, None
         try:
             texto, conf = extrair_texto_com_confianca(recorte)
-        except Exception:
-            texto, conf = "", 0.0
-        self._ocr_fila.put((seq, texto, conf, recorte))
+        except Exception as exc:
+            erro = str(exc) or type(exc).__name__
+            log_erro(f"OCR da seleção falhou: {erro}")
+        self._ocr_fila.put((seq, texto, conf, recorte, erro))
 
     def _poll_ocr(self):
         try:
-            seq, texto, conf, recorte = self._ocr_fila.get_nowait()
+            seq, texto, conf, recorte, erro = self._ocr_fila.get_nowait()
         except queue.Empty:
             with contextlib.suppress(Exception):
                 if self.winfo_exists():
                     self.after(100, self._poll_ocr)
             return
-        self._mostrar_confirmacao(texto, conf, recorte, seq)
+        self._mostrar_confirmacao(texto, conf, recorte, seq, erro)
         with contextlib.suppress(Exception):
             if self.winfo_exists():
                 self.after(100, self._poll_ocr)
@@ -218,7 +220,7 @@ class RegionWindow(ctk.CTkToplevel):
         for w in self.painel.winfo_children():
             w.destroy()
 
-    def _mostrar_confirmacao(self, texto, conf, recorte, seq):
+    def _mostrar_confirmacao(self, texto, conf, recorte, seq, erro=None):
         if seq != self._seq:
             return
         try:
@@ -252,6 +254,8 @@ class RegionWindow(ctk.CTkToplevel):
                 txt_conf, cor = f"Extraído com confiança média ({conf:.0f}%)", c["warning"]
             else:
                 txt_conf, cor = f"Extraído com confiança baixa ({conf:.0f}%)", c["danger"]
+        elif erro:
+            txt_conf, cor = f"OCR falhou: {erro}. Digite o valor manualmente.", c["danger"]
         else:
             txt_conf, cor = "Nada foi lido nesta área. Digite o valor manualmente.", c["warning"]
         ctk.CTkLabel(

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.5] - 2026-10-23
+
+### Fixed
+- **OCR descartava valores curtos** — leituras como "MG", "SIM" ou "1" eram tratadas como vazio e o campo aparecia como não lido; agora qualquer texto lido é preservado
+- **OCR silencioso** — quando o Tesseract falha, a janela de seleção mostra o motivo real em vez de apenas "Nada foi lido nesta área", e o erro fica registrado no log
+- **Leitura em digitalizações difíceis** — se a binarização não encontra texto, o OCR tenta a região em escala de cinza e, por último, segmentação de linha única
+- **Idioma indisponível** — se o pacote de português do Tesseract não estiver instalado, usa inglês em vez de falhar
+
 ## [4.0.4] - 2026-10-22
 
 ### Fixed

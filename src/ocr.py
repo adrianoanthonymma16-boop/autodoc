@@ -26,22 +26,12 @@ def _configurar_tesseract():
 _configurar_tesseract()
 
 
-def preprocessar_imagem(imagem_pil):
-    """
-    Pré-processa a imagem para melhorar a leitura do OCR
+def _para_cinza(imagem_pil):
+    """Normaliza a imagem e devolve o recorte em escala de cinza ampliado.
 
-    Etapas:
-    1. Converte PIL para OpenCV
-    2. Aumenta resolução (resize)
-    3. Converte para escala de cinza
-    4. Aplica CLAHE para contraste local
-    5. Binarização OTSU (preto e branco)
-
-    Args:
-        imagem_pil (PIL.Image): Imagem original
-
-    Returns:
-        numpy.ndarray: Imagem processada em preto e branco
+    A binarização OTSU ajuda em digitalizações, mas apaga texto claro sobre
+    fundo escuro, carimbos e fotos com sombra. Por isso o OCR tenta também
+    esta versão sem limiar quando a primeira leitura não devolve nada.
     """
     # Normaliza modo PIL para RGB
     if imagem_pil.mode == "RGBA":
@@ -64,11 +54,29 @@ def preprocessar_imagem(imagem_pil):
 
     # CLAHE (Contraste Local Adaptativo)
     clahe = cv2.createCLAHE(clipLimit=OCR_CLIPLIMIT, tileGridSize=OCR_TILE_GRID)
-    gray = clahe.apply(gray)
+    return clahe.apply(gray)
 
+
+def preprocessar_imagem(imagem_pil):
+    """
+    Pré-processa a imagem para melhorar a leitura do OCR
+
+    Etapas:
+    1. Converte PIL para OpenCV
+    2. Aumenta resolução (resize)
+    3. Converte para escala de cinza
+    4. Aplica CLAHE para contraste local
+    5. Binarização OTSU (preto e branco)
+
+    Args:
+        imagem_pil (PIL.Image): Imagem original
+
+    Returns:
+        numpy.ndarray: Imagem processada em preto e branco
+    """
+    gray = _para_cinza(imagem_pil)
     # Binarização OTSU (preto e branco)
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
     return binary
 
 
@@ -87,7 +95,7 @@ def calcular_confianca(data):
     confs = data.get('conf', [])
     peso_total = 0.0
     soma = 0.0
-    for texto, conf in zip(textos, confs):
+    for texto, conf in zip(textos, confs, strict=False):
         try:
             conf_num = float(conf)
         except (TypeError, ValueError):
@@ -104,32 +112,62 @@ def calcular_confianca(data):
     return round(soma / peso_total, 1)
 
 
-def extrair_texto_com_confianca(imagem_pil):
-    """
-    OCR com confiança por região usando image_to_data.
+_LANGS = None
 
-    Returns:
-        tuple[str, float]: (texto limpo, confiança 0..100).
-        Texto curto (<= 2 char) retorna ("", 0.0) — mesmo contrato de
-        extrair_texto_da_regiao.
-    """
-    imagem_processada = preprocessar_imagem(imagem_pil)
 
+def _langs_disponiveis():
+    """Lista os idiomas do Tesseract, tolerando ambientes sem o binário."""
+    global _LANGS
+    if _LANGS is None:
+        try:
+            _LANGS = set(pytesseract.get_languages(config=''))
+        except Exception:
+            _LANGS = set()
+    return _LANGS
+
+
+def _lang_efetiva():
+    """Usa o idioma do projeto; cai para inglês se ele não estiver instalado."""
+    langs = _langs_disponiveis()
+    if not langs or TESSERACT_LANG in langs:
+        return TESSERACT_LANG
+    return 'eng' if 'eng' in langs else sorted(langs)[0]
+
+
+def _ocr_data(imagem, config):
     data = pytesseract.image_to_data(
-        imagem_processada,
-        lang=TESSERACT_LANG,
-        config=TESSERACT_CONFIG,
-        output_type=pytesseract.Output.DICT
+        imagem,
+        lang=_lang_efetiva(),
+        config=config,
+        output_type=pytesseract.Output.DICT,
     )
-
     texto = ' '.join(
         t for t in data.get('text', []) if t and t.strip()
     )
     texto = ' '.join(texto.split())
-
-    if len(texto) <= 2:
-        return "", 0.0
     return texto, calcular_confianca(data)
+
+
+def extrair_texto_com_confianca(imagem_pil):
+    """
+    OCR com confiança por região usando image_to_data.
+
+    Tenta a binarização OTSU (melhor para digitalização) e, se nada vier,
+    repete em escala de cinza e com segmentação de linha única. Valores
+    curtos (ex.: "MG", "SIM", "1") são válidos e não podem ser descartados.
+
+    Returns:
+        tuple[str, float]: (texto limpo, confiança 0..100).
+    """
+    texto, conf = _ocr_data(preprocessar_imagem(imagem_pil), TESSERACT_CONFIG)
+    if texto:
+        return texto, conf
+    cinza = _para_cinza(imagem_pil)
+    for config in (TESSERACT_CONFIG, '--psm 7'):
+        texto, conf = _ocr_data(cinza, config)
+        if texto:
+            return texto, conf
+    return "", 0.0
 
 
 def extrair_texto_da_regiao(imagem_pil):
@@ -157,7 +195,7 @@ def extrair_texto_da_regiao(imagem_pil):
     texto = texto.replace('\n', ' ')
     texto = ' '.join(texto.split())
 
-    return texto if len(texto) > 2 else ""
+    return texto
 
 
 def extrair_recorte_com_confianca(imagem_original, coordenadas):

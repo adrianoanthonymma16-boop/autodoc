@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-4.0.4-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.5-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.4**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
+Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.5**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
 
 ---
 
@@ -123,9 +123,9 @@ O snap já inclui o Tesseract com português e a fonte Inter. Os dados ficam em
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.4_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.5_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.4_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.5_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -143,7 +143,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.4_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.5_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -258,7 +258,13 @@ Principais problemas corrigidos na v4.0 (16 bugs):
 
 ## Versões
 
-### v4.0.4 (atual) — Seleção com páginas e confirmação visível
+### v4.0.5 (atual) — OCR não perde valores curtos
+
+- Valores curtos lidos pelo OCR ("MG", "SIM", "1") deixam de ser descartados
+- Falha do Tesseract agora aparece na janela de seleção com o motivo, e vai para o log
+- Segunda tentativa de leitura em escala de cinza e terceira com linha única quando a binarização não lê nada
+
+### v4.0.4 — Seleção com páginas e confirmação visível
 - **Lote por planilha** — XLSX/CSV/TSV com sugestão automática de mapeamento e relatório por linha
 - **Fichas de dados** e **saída organizada** (pasta padrão, padrão de nome, subpasta por data)
 - **Pré-visualização** do documento gerado e **confiança por campo de OCR**
@@ -345,12 +351,12 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-4.0.4-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.5-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.4**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
+Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.5**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
 
 ---
 
@@ -468,13 +474,13 @@ The snap bundles Tesseract with Portuguese and the Inter font. Data lives in
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.4_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.5_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.4_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.5_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
@@ -510,7 +516,13 @@ autodoc/
 
 ## Versions
 
-### v4.0.4 (current) — Multi-page selection and visible confirmation
+### v4.0.5 (current) — OCR keeps short values
+
+- Short OCR results ("MG", "SIM", "1") are no longer discarded
+- Tesseract failures now appear in the selection window with the actual reason and are written to the log
+- Second read attempt in grayscale and a third with single-line segmentation when binarization finds nothing
+
+### v4.0.4 — Multi-page selection and visible confirmation
 - Spreadsheet batch (XLSX/CSV/TSV) with automatic column mapping and per-row report
 - Data profiles, organized output and document preview; per-field OCR confidence
 - Themed file picker and dialogs; hidden dotfiles stay out of the list
