@@ -118,24 +118,41 @@ def _extrair_cru(raw):
     return placeholders
 
 
-def extrair_placeholders_odt(caminho_odt):
-    """Extrai placeholders de todo o content.xml, inclusive dentro de formas."""
-    with zipfile.ZipFile(caminho_odt, "r") as odt:
-        raw = odt.read("content.xml")
+PARTES_TEXTO = ("content.xml", "styles.xml")
 
-    try:
-        root = _parse_content(raw)
-    except ET.ParseError:
-        return _extrair_cru(raw)
+
+def _partes_texto(odt):
+    """XMLs que podem conter texto: corpo (content) e estilos (styles)."""
+    for nome in PARTES_TEXTO:
+        try:
+            yield nome, odt.read(nome)
+        except KeyError:
+            continue
+
+
+def extrair_placeholders_odt(caminho_odt):
+    """Extrai placeholders do corpo e dos cabeçalhos/rodapés.
+
+    Cabeçalhos e rodapés de ODT ficam em styles.xml (style:master-page), não em
+    content.xml; por isso os dois arquivos são lidos.
+    """
+    with zipfile.ZipFile(caminho_odt, "r") as odt:
+        partes = list(_partes_texto(odt))
 
     placeholders = set()
-    for elem in root.iter():
-        if elem.tag not in TAGS_PARAGRAFO:
+    for _nome, raw in partes:
+        try:
+            root = _parse_content(raw)
+        except ET.ParseError:
+            placeholders.update(_extrair_cru(raw))
             continue
-        for match in PLACEHOLDER_RE.findall(_texto_paragrafo(elem)):
-            clean = match.strip()
-            if 0 < len(clean) <= 80:
-                placeholders.add(clean)
+        for elem in root.iter():
+            if elem.tag not in TAGS_PARAGRAFO:
+                continue
+            for match in PLACEHOLDER_RE.findall(_texto_paragrafo(elem)):
+                clean = match.strip()
+                if 0 < len(clean) <= 80:
+                    placeholders.add(clean)
     return placeholders
 
 
@@ -163,22 +180,27 @@ def gerar_odt_preenchido(caminho_modelo, dados, caminho_saida):
         with zipfile.ZipFile(caminho_saida, "r") as odt_in:
             odt_in.extractall(tmpdir)
 
-        content_path = os.path.join(tmpdir, "content.xml")
-        with open(content_path, "rb") as f:
-            raw = f.read()
+        for nome in PARTES_TEXTO:
+            caminho_parte = os.path.join(tmpdir, nome)
+            if not os.path.exists(caminho_parte):
+                continue
+            with open(caminho_parte, "rb") as f:
+                raw = f.read()
 
-        try:
-            root = _parse_content(raw)
-        except ET.ParseError:
-            novo_conteudo = _substituir_cru(raw.decode("utf-8", errors="ignore"), dados)
-            with open(content_path, "w", encoding="utf-8") as f:
-                f.write(novo_conteudo)
-        else:
-            for elem in root.iter():
-                if elem.tag in TAGS_PARAGRAFO:
-                    _substituir_em_paragrafo(elem, dados)
-            with open(content_path, "wb") as f:
-                f.write(ET.tostring(root, encoding="utf-8", xml_declaration=True))
+            try:
+                root = _parse_content(raw)
+            except ET.ParseError:
+                novo_conteudo = _substituir_cru(
+                    raw.decode("utf-8", errors="ignore"), dados
+                )
+                with open(caminho_parte, "w", encoding="utf-8") as f:
+                    f.write(novo_conteudo)
+            else:
+                for elem in root.iter():
+                    if elem.tag in TAGS_PARAGRAFO:
+                        _substituir_em_paragrafo(elem, dados)
+                with open(caminho_parte, "wb") as f:
+                    f.write(ET.tostring(root, encoding="utf-8", xml_declaration=True))
 
         # Recria zip com mimetype primeiro
         with zipfile.ZipFile(caminho_saida, "w") as odt_out:

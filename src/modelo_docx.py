@@ -22,15 +22,40 @@ except ImportError as _e:
 PLACEHOLDER_RE = re.compile(r'\{\{\s*([^}]+?)\s*\}\}')
 
 
-def _partes_cabecalho_rodape(section):
-    """Acessa header/footer com tolerância.
+_REFERENCIAS_CABECALHO = (
+    ("headerReference", "default", "header"),
+    ("headerReference", "first", "first_page_header"),
+    ("headerReference", "even", "even_page_header"),
+    ("footerReference", "default", "footer"),
+    ("footerReference", "first", "first_page_footer"),
+    ("footerReference", "even", "even_page_footer"),
+)
 
-    Em builds congelados (PyInstaller) o python-docx pode não achar o template
-    default-header.xml ao criar uma seção sem cabeçalho; nesse caso o documento
-    ainda deve carregar (só os placeholders de cabeçalho/rodapé ficam de fora).
+
+def _partes_cabecalho_rodape(section):
+    """Cabeçalhos/rodapés realmente referenciados pela seção.
+
+    Só acessa ``section.header``/``footer`` quando existe a referência
+    correspondente no ``w:sectPr``. Acessar sem referência faz o python-docx
+    criar uma parte vazia (e, em builds congelados sem os templates, registrar
+    erro). Assim também entram cabeçalhos de primeira página e de páginas
+    pares, que antes eram ignorados.
     """
+    sect_pr = getattr(section, "_sectPr", None)
+    if sect_pr is None:
+        return []
+
+    presentes = set()
+    for tag, tipo, attr in _REFERENCIAS_CABECALHO:
+        for ref in sect_pr.findall(qn(f"w:{tag}")):
+            if (ref.get(qn("w:type")) or "default") == tipo:
+                presentes.add(attr)
+                break
+
     partes = []
-    for attr in ("header", "footer"):
+    for _tag, _tipo, attr in _REFERENCIAS_CABECALHO:
+        if attr not in presentes:
+            continue
         try:
             partes.append(getattr(section, attr))
         except Exception as e:
@@ -66,64 +91,94 @@ def _paragrafos_documento(doc):
                 yield from _paragrafos_recursivos(parte._element, parte)
 
 
+def _nos_texto(paragraph):
+    """Nós ``w:t`` que pertencem a este parágrafo.
+
+    Percorre o XML inteiro (não só ``paragraph.runs``) para alcançar textos
+    dentro de hyperlinks, ``w:smartTag``, ``w:ins`` e controles de conteúdo.
+    Parágrafos aninhados (caixas de texto) são ignorados aqui e visitados por
+    conta própria em ``_paragrafos_recursivos``.
+    """
+    elemento = paragraph._p
+    nos = []
+    for no in elemento.iter(qn("w:t")):
+        dono = no.getparent()
+        while dono is not None and dono.tag != qn("w:p"):
+            dono = dono.getparent()
+        if dono is elemento:
+            nos.append(no)
+    return nos
+
+
+def _definir_texto(no, texto):
+    no.text = texto
+    if texto and texto != texto.strip():
+        no.set(qn("xml:space"), "preserve")
+
+
+def _substituir_nos(nos, dados):
+    """Substitui placeholders entre os nós de texto, preservando os runs."""
+    alterou = False
+    while True:
+        textos = [no.text or "" for no in nos]
+        completo = "".join(textos)
+
+        alvo = None
+        for match in PLACEHOLDER_RE.finditer(completo):
+            chave = match.group(1).strip()
+            if chave in dados:
+                alvo = (match, str(dados[chave]))
+                break
+        if alvo is None:
+            return alterou
+
+        match, valor = alvo
+        inicio, fim = match.span()
+
+        faixas = []
+        pos = 0
+        for indice, texto in enumerate(textos):
+            faixas.append((indice, pos, pos + len(texto)))
+            pos += len(texto)
+        afetados = [f for f in faixas if f[1] < fim and f[2] > inicio]
+        if not afetados:
+            return alterou
+        primeiro = afetados[0][0]
+
+        for indice, ini_no, _fim_no in reversed(afetados):
+            texto = textos[indice]
+            ini = max(inicio, ini_no) - ini_no
+            fim_local = min(fim, ini_no + len(texto)) - ini_no
+            novo = (
+                texto[:ini] + valor + texto[fim_local:]
+                if indice == primeiro
+                else texto[:ini] + texto[fim_local:]
+            )
+            _definir_texto(nos[indice], novo)
+
+        if "".join(no.text or "" for no in nos) == completo:
+            return alterou
+        alterou = True
+
+
 def _text_from_paragraph(paragraph):
-    """Concatena runs para detectar placeholders divididos"""
-    return "".join(run.text for run in paragraph.runs)
+    """Concatena todo o texto do parágrafo, inclusive hyperlinks."""
+    return "".join(no.text or "" for no in _nos_texto(paragraph))
 
 
 def _replace_in_paragraph(paragraph, dados):
+    """Substitui placeholders no nível dos nós de texto.
+
+    Diferente da versão anterior, não concentra o parágrafo em um único run:
+    cada valor herda a formatação do trecho onde o placeholder começa e
+    hyperlinks/campos continuam existindo.
     """
-    Substitui placeholders preservando runs:
-    - Reconstrói texto completo, substitui, e redistribui em runs mantendo estilo do primeiro run
-    """
-    full = _text_from_paragraph(paragraph)
-    if "{{" not in full:
+    nos = _nos_texto(paragraph)
+    if not nos:
         return False
-    # verifica se há placeholder
-    found = PLACEHOLDER_RE.search(full)
-    if not found:
+    if "{{" not in "".join(no.text or "" for no in nos):
         return False
-
-    # substitui todos
-    new_text = full
-    for ph, valor in dados.items():
-        # tolera espaços
-        new_text = re.sub(r'\{\{\s*' + re.escape(ph) + r'\s*\}\}', valor, new_text)
-
-    if new_text == full:
-        return False
-
-    # Redistribui: limpa apenas runs de texto, preservando desenhos/formas
-    # ancorados no mesmo parágrafo.
-    runs_texto = [r for r in paragraph.runs if r.text]
-    if runs_texto:
-        base = runs_texto[0]
-        style = base.style
-        bold = base.bold
-        italic = base.italic
-        underline = base.underline
-        font_name = base.font.name
-        font_size = base.font.size
-        color = base.font.color.rgb if base.font.color else None
-        for r in runs_texto:
-            r._element.getparent().remove(r._element)
-        run = paragraph.add_run(new_text)
-        try:
-            run.style = style
-            run.bold = bold
-            run.italic = italic
-            run.underline = underline
-            if font_name:
-                run.font.name = font_name
-            if font_size:
-                run.font.size = font_size
-            if color:
-                run.font.color.rgb = color
-        except Exception:
-            pass
-    else:
-        paragraph.text = new_text
-    return True
+    return _substituir_nos(nos, dados)
 
 
 def extrair_placeholders_docx(caminho_docx):
@@ -136,7 +191,9 @@ def extrair_placeholders_docx(caminho_docx):
     for paragraph in _paragrafos_documento(doc):
         text = _text_from_paragraph(paragraph)
         for match in PLACEHOLDER_RE.findall(text):
-            placeholders.add(match.strip())
+            nome = match.strip()
+            if 0 < len(nome) <= 80:
+                placeholders.add(nome)
 
     return placeholders
 
