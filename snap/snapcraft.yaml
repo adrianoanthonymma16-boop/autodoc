@@ -2,7 +2,7 @@ name: autodoc-ctk
 title: AutoDoc
 icon: assets/brand/autodoc-icon.svg
 base: core24
-version: "4.0.5"
+version: "4.0.6"
 summary: "AutoDoc: preencha modelos ODT/DOCX por OCR, planilha ou digitação"
 description: |
   # AutoDoc

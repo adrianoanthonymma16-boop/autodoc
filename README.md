@@ -1,11 +1,11 @@
 # AutoDoc &middot; [English](#english)
 
-[![Version](https://img.shields.io/badge/version-4.0.5-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.6-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.5**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
+Automatize o preenchimento de documentos ODT/DOCX usando OCR, planilha ou digitação — **v4.0.6**, com interface premium responsiva, arquitetura desacoplada, lote por planilha, pré-visualização e 100% offline.
 
 ---
 
@@ -123,9 +123,9 @@ O snap já inclui o Tesseract com português e a fonte Inter. Os dados ficam em
 ### Linux — pacote `.deb` (Ubuntu/Debian)
 
 ```bash
-# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.5_amd64.deb)
+# 1. Baixe o .deb da release (ex.: autodoc-ctk_4.0.6_amd64.deb)
 # 2. Instale com apt para resolver as dependências do Tesseract:
-sudo apt install ./autodoc-ctk_4.0.5_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.6_amd64.deb
 
 # 3. Abra pelo menu de aplicativos (AutoDoc) ou pelo terminal:
 autodoc-ctk
@@ -143,7 +143,7 @@ sudo apt remove autodoc-ctk
 
 ### Windows 10/11 (64 bits) — instalador `.exe`
 
-1. Baixe `autodoc-ctk_4.0.5_win64_setup.exe` na release.
+1. Baixe `autodoc-ctk_4.0.6_win64_setup.exe` na release.
 2. Execute o instalador e siga o assistente (opção de atalho na área de trabalho).
 3. Se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 4. Abra o AutoDoc pelo atalho ou pelo menu Iniciar.
@@ -258,7 +258,16 @@ Principais problemas corrigidos na v4.0 (16 bugs):
 
 ## Versões
 
-### v4.0.5 (atual) — OCR não perde valores curtos
+### v4.0.6 (atual) — placeholders em cabeçalhos, links e revisões
+
+- **DOCX** — placeholders em cabeçalhos/rodapés de primeira página e de páginas pares, dentro de hyperlinks, alterações controladas e controles de conteúdo passam a ser extraídos e preenchidos
+- **ODT** — cabeçalhos e rodapés (definidos em `styles.xml`) também entram na extração e no preenchimento
+- **Fim do erro falso** — seção sem cabeçalho não gera mais `DOCX: nao foi possivel acessar header` no log
+- **Formatação preservada** — a substituição no DOCX ocorre no próprio trecho de texto, sem concentrar o parágrafo em um único run
+- **Valores com barra invertida** — caminhos como `C:\temp` deixam de quebrar a geração
+- **Janela de mapeamento** — seletor para pular direto a um campo, navegação por página (botões e Page Up/Page Down), destaque do campo atual e botão Remapear no resumo
+
+### v4.0.5 — OCR não perde valores curtos
 
 - Valores curtos lidos pelo OCR ("MG", "SIM", "1") deixam de ser descartados
 - Falha do Tesseract agora aparece na janela de seleção com o motivo, e vai para o log
@@ -351,12 +360,12 @@ Software de código aberto sob a licença MIT. Veja o arquivo [LICENSE.txt](LICE
 
 # AutoDoc &middot; [Português](#autodoc)
 
-[![Version](https://img.shields.io/badge/version-4.0.5-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
+[![Version](https://img.shields.io/badge/version-4.0.6-blue)](https://github.com/adrianoanthonymma16-boop/autodoc)
 [![Python](https://img.shields.io/badge/python-3.8+-green)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-orange)](https://ubuntu.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
 
-Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.5**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
+Automate ODT/DOCX document filling using OCR, spreadsheets or manual input — **v4.0.6**, with a premium responsive UI, decoupled architecture, spreadsheet batch, preview and fully offline operation.
 
 ---
 
@@ -474,13 +483,13 @@ The snap bundles Tesseract with Portuguese and the Inter font. Data lives in
 ### Linux — `.deb` (Ubuntu/Debian)
 
 ```bash
-sudo apt install ./autodoc-ctk_4.0.5_amd64.deb
+sudo apt install ./autodoc-ctk_4.0.6_amd64.deb
 autodoc-ctk
 ```
 
 ### Windows 10/11 (64-bit) — `.exe`
 
-1. Download `autodoc-ctk_4.0.5_win64_setup.exe`.
+1. Download `autodoc-ctk_4.0.6_win64_setup.exe`.
 2. Run the wizard (optionally create a desktop shortcut).
 3. If SmartScreen warns, choose **More info → Run anyway**.
 
@@ -516,7 +525,16 @@ autodoc/
 
 ## Versions
 
-### v4.0.5 (current) — OCR keeps short values
+### v4.0.6 (current) — placeholders in headers, links and revisions
+
+- **DOCX** — placeholders in first-page/even-page headers and footers, inside hyperlinks, tracked changes and content controls are now extracted and filled
+- **ODT** — headers and footers (defined in `styles.xml`) are included in extraction and filling
+- **No more false error** — a section without a header no longer logs `DOCX: nao foi possivel acessar header`
+- **Formatting preserved** — DOCX replacement happens in the text node itself instead of collapsing the paragraph into one run
+- **Backslash values** — paths such as `C:\temp` no longer break generation
+- **Mapping window** — jump-to-field selector, page navigation (buttons and Page Up/Page Down), highlight of the current field and a Remap button in the summary
+
+### v4.0.5 — OCR keeps short values
 
 - Short OCR results ("MG", "SIM", "1") are no longer discarded
 - Tesseract failures now appear in the selection window with the actual reason and are written to the log

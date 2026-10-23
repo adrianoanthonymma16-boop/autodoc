@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.6] - 2026-10-23
+
+### Fixed
+- **DOCX: cabeçalhos e rodapés ignorados** — só o cabeçalho/rodapé padrão era lido; agora entram também os de primeira página e de páginas pares, tanto na extração quanto no preenchimento
+- **DOCX: texto dentro de hyperlink** — `paragraph.runs` não enxerga runs dentro de `w:hyperlink`, `w:smartTag`, `w:ins` e controles de conteúdo; o placeholder era perdido na extração e não era substituído
+- **DOCX: erro falso no log** — acessar `section.header` numa seção sem cabeçalho criava parte vazia e registrava `DOCX: nao foi possivel acessar header: default-header.xml`; agora só acessa quando existe `w:headerReference`/`w:footerReference`
+- **ODT: cabeçalhos e rodapés ignorados** — o conteúdo de `styles.xml` (`style:header`/`style:footer`) não era lido nem preenchido; agora é
+- **DOCX: formatação perdida** — a substituição concentrava o parágrafo num único run, herdando só o estilo do primeiro; agora o valor fica no próprio trecho e os demais runs são preservados
+- **DOCX: valor com barra invertida** — `re.sub` interpretava `C:\temp` como escape e quebrava a geração; a substituição passou a ser feita por posição no texto
+
+### Added
+- **Janela de mapeamento** — seletor para pular direto a um campo, navegação por página (botões e Page Up/Page Down), destaque do campo atual em cor própria e botão Remapear no resumo
+- Testes de extração/preenchimento em hyperlinks, alterações controladas, cabeçalhos de primeira/par páginas (DOCX) e cabeçalhos/rodapés (ODT)
+
+### Changed
+- Ao trocar de campo, qualquer OCR em andamento é descartado, evitando que o valor de um campo caia no seguinte
+
 ## [4.0.5] - 2026-10-23
 
 ### Fixed
