@@ -27,6 +27,7 @@ ICONS = (
     "edit", "rocket", "check", "alert", "folder",
     "inbox", "image", "x", "plus", "minus", "undo",
     "arrow-up", "file", "sheet", "info",
+    "chevron-left", "chevron-right",
 )
 
 _PIL_CACHE: dict = {}

@@ -84,6 +84,56 @@ class RegionWindow(ctk.CTkToplevel):
             lambda e: self.lbl_sub.configure(wraplength=max(320, e.width - 80)),
         )
 
+        barra = ctk.CTkFrame(self, fg_color="transparent")
+        barra.pack(fill="x", padx=18, pady=(0, 6))
+        ctk.CTkLabel(
+            barra, text="Campo", font=FONTS["caption"], text_color=c["text_muted"]
+        ).pack(side="left")
+        self._rotulos_campo = [
+            f"{i + 1} de {len(self.placeholders)} · {ph}"
+            for i, ph in enumerate(self.placeholders)
+        ]
+        self.opt_campo = ctk.CTkOptionMenu(
+            barra,
+            values=self._rotulos_campo,
+            width=280,
+            height=30,
+            font=FONTS["caption"],
+            fg_color=c["surface_elevated"],
+            button_color=c["primary"],
+            button_hover_color=c["primary_hover"],
+            text_color=c["text"],
+            dropdown_fg_color=c["surface_elevated"],
+            dropdown_text_color=c["text"],
+            command=self._ir_para_campo,
+        )
+        self.opt_campo.pack(side="left", padx=(6, 0))
+
+        ctk.CTkButton(
+            barra,
+            text="",
+            image=get_icon("chevron-right", 16, c["text"]),
+            width=30,
+            height=30,
+            fg_color="transparent",
+            hover_color=c["surface_hover"],
+            command=lambda: self._passo_pagina(1),
+        ).pack(side="right")
+        self.lbl_pagina = ctk.CTkLabel(
+            barra, text="", font=FONTS["caption"], text_color=c["text_muted"]
+        )
+        self.lbl_pagina.pack(side="right", padx=8)
+        ctk.CTkButton(
+            barra,
+            text="",
+            image=get_icon("chevron-left", 16, c["text"]),
+            width=30,
+            height=30,
+            fg_color="transparent",
+            hover_color=c["surface_hover"],
+            command=lambda: self._passo_pagina(-1),
+        ).pack(side="right")
+
         self.card_canvas = card(self)
         self.card_canvas.pack(fill="both", expand=True, padx=14, pady=4)
         self.canvas = ImageCanvas(
@@ -102,10 +152,18 @@ class RegionWindow(ctk.CTkToplevel):
         self.canvas.set_image(self.composto)
         self._aplicar_overlays()
         self._atualizar_cabecalho()
+        self.opt_campo.set(self._rotulos_campo[0])
+        self.bind("<Prior>", lambda e: self._passo_pagina(-1))
+        self.bind("<Next>", lambda e: self._passo_pagina(1))
         self.after(250, self.canvas.fit_to_width)
+        self.after(320, self._atualizar_pagina)
+        alvo = self._pagina_do_campo(self._placeholder())
+        if alvo is not None:
+            self.after(340, lambda i=alvo: self._ir_para_pagina(i))
         self.after(150, self._tornar_modal)
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         self._poll_ocr()
+        self.after(400, self._sync_pagina)
 
     def _tornar_modal(self):
         with contextlib.suppress(Exception):
@@ -124,12 +182,92 @@ class RegionWindow(ctk.CTkToplevel):
         self.lbl_sub.configure(
             text=(
                 f"Campo {self.indice + 1} de {total} · {confirmados} já confirmado"
-                f"{'s' if confirmados != 1 else ''}. Role para ver as próximas páginas; "
-                "arraste sobre o valor e confirme ou edite o texto lido."
+                f"{'s' if confirmados != 1 else ''}. Arraste sobre o valor em qualquer "
+                "página; use o seletor de campo ou as setas para navegar."
             )
         )
         self.lbl_status.configure(text="Arraste sobre o valor em qualquer página.")
         self.title(f"Selecionar área de {ph}")
+        self.opt_campo.set(self._rotulos_campo[self.indice])
+
+    # --- navegação entre campos e páginas ---
+    def _ir_para_campo(self, rotulo):
+        with contextlib.suppress(ValueError):
+            indice = self._rotulos_campo.index(rotulo)
+            if indice != self.indice:
+                self._selecionar_campo(indice)
+
+    def _selecionar_campo(self, indice):
+        if not 0 <= indice < len(self.placeholders):
+            return
+        self.indice = indice
+        self._iniciar_campo()
+
+    def _pagina_do_campo(self, campo):
+        chave = None
+        for ref in self._refs:
+            if ref.get('label') == campo:
+                chave = (ref.get('documento_path'), ref.get('pagina', 0))
+                break
+        if chave is None:
+            return None
+        for indice, pagina in enumerate(self.paginas):
+            if (pagina['documento_path'], pagina['pagina']) == chave:
+                return indice
+        return None
+
+    def _indice_pagina_visivel(self):
+        if not self.canvas.imagem_resized or not self.canvas.imagem_original:
+            return 0
+        escala = self.canvas.imagem_resized.height / max(
+            1, self.canvas.imagem_original.height
+        )
+        topo = self.canvas.canvas.canvasy(0)
+        y = (topo - self.canvas.pan_y) / max(escala, 1e-6)
+        indice = 0
+        for i, pagina in enumerate(self.paginas):
+            if pagina['y'] <= y + 30:
+                indice = i
+        return indice
+
+    def _atualizar_pagina(self):
+        if not self.paginas:
+            return
+        indice = self._indice_pagina_visivel()
+        pagina = self.paginas[indice]
+        nome = pagina['documento_nome'] or 'documento'
+        if len(nome) > 26:
+            nome = nome[:23] + '...'
+        self.lbl_pagina.configure(
+            text=f"{nome} · {pagina['pagina'] + 1}/{pagina['total_paginas']}"
+        )
+
+    def _sync_pagina(self):
+        try:
+            if not self.winfo_exists():
+                return
+            self._atualizar_pagina()
+            self.after(400, self._sync_pagina)
+        except Exception:
+            return
+
+    def _ir_para_pagina(self, indice):
+        if not 0 <= indice < len(self.paginas):
+            return
+        if not self.canvas.imagem_resized or not self.canvas.imagem_original:
+            return
+        pagina = self.paginas[indice]
+        escala = self.canvas.imagem_resized.height / max(
+            1, self.canvas.imagem_original.height
+        )
+        y = pagina['y'] * escala + self.canvas.pan_y
+        altura = max(1, self.canvas.imagem_resized.height)
+        self.canvas.canvas.yview_moveto(max(0.0, min(1.0, (y - 6) / altura)))
+        self._atualizar_pagina()
+
+    def _passo_pagina(self, delta):
+        atual = self._indice_pagina_visivel()
+        self._ir_para_pagina(max(0, min(len(self.paginas) - 1, atual + delta)))
 
     def _refs_compostas(self):
         por_chave = {(p['documento_path'], p['pagina']): p for p in self.paginas}
@@ -140,15 +278,29 @@ class RegionWindow(ctk.CTkToplevel):
             if pagina is None:
                 continue
             base = retangulo_composto(pagina, r['x1'], r['y1'], r['x2'], r['y2'])
+            base['campo'] = r.get('label')
             base['label'] = f"✓ {r['label']}" if r.get('label') else ""
             resultado.append(base)
         return resultado
 
     def _aplicar_overlays(self):
         c = get_colors()
+        atual = (
+            self.placeholders[self.indice]
+            if self.indice < len(self.placeholders)
+            else None
+        )
 
         def overlay(cv):
-            cv.draw_rects(self._refs_compostas(), color=c["success"], label_color=c["success"])
+            refs = self._refs_compostas()
+            cv.draw_rects(
+                [r for r in refs if r.get('campo') != atual],
+                color=c["success"], label_color=c["success"],
+            )
+            cv.draw_rects(
+                [r for r in refs if r.get('campo') == atual],
+                color=c["primary"], label_color=c["primary"],
+            )
             if not cv.imagem_original or not cv.imagem_resized:
                 return
             sx = cv.imagem_resized.width / cv.imagem_original.width
@@ -166,12 +318,16 @@ class RegionWindow(ctk.CTkToplevel):
         self.canvas.set_overlays([overlay])
 
     def _iniciar_campo(self):
+        self._seq += 1
         self._alvo = None
         self.canvas.permitir_selecao = True
         self.canvas.limpar_selecao()
         self._limpar_painel()
         self._atualizar_cabecalho()
         self._aplicar_overlays()
+        alvo = self._pagina_do_campo(self._placeholder())
+        if alvo is not None:
+            self.after(30, lambda i=alvo: self._ir_para_pagina(i))
 
     # --- seleção ---
     def _on_rect(self, x1, y1, x2, y2):
@@ -357,6 +513,7 @@ class RegionWindow(ctk.CTkToplevel):
             self._mostrar_resumo()
 
     def _selecionar_de_novo(self):
+        self._seq += 1
         self._alvo = None
         self._limpar_painel()
         self.canvas.limpar_selecao()
@@ -373,7 +530,9 @@ class RegionWindow(ctk.CTkToplevel):
         self.lbl_sub.configure(
             text=f"{n} campo{'s' if n != 1 else ''} mapeado{'s' if n != 1 else ''} nesta seleção."
         )
-        self.lbl_status.configure(text="Você pode fechar a janela ou remapear clicando na lista.")
+        self.lbl_status.configure(
+            text="Feche a janela ou clique em Remapear para ajustar um campo."
+        )
         box = card(self.painel)
         box.pack(fill="x")
         ctk.CTkLabel(
@@ -381,6 +540,17 @@ class RegionWindow(ctk.CTkToplevel):
             text=f"{n} campo{'s' if n != 1 else ''} confirmado{'s' if n != 1 else ''}.",
             font=FONTS["body"], text_color=c["success"],
         ).pack(side="left", padx=12, pady=12)
+        ctk.CTkButton(
+            box,
+            text="Remapear",
+            height=36,
+            corner_radius=10,
+            fg_color="transparent",
+            border_width=1,
+            border_color=c["border"],
+            text_color=c["text"],
+            command=lambda: self._selecionar_campo(0),
+        ).pack(side="right", padx=(0, 6))
         ctk.CTkButton(
             box,
             text="Fechar",
