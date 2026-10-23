@@ -18,6 +18,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
+from config import casa_do_usuario
 from ui.components.widgets import scroll_frame
 from ui.icons import get as get_icon
 from ui.theme import FONTS, get_colors
@@ -92,6 +93,11 @@ def listar(diretorio, sufixos=(), incluir_ocultos=False, somente_diretorios=Fals
     return itens
 
 
+def subpastas(diretorio, incluir_ocultos=False) -> list[Entrada]:
+    """Subpastas de um diretório, em ordem alfabética (para a árvore)."""
+    return [e for e in listar(diretorio, incluir_ocultos=incluir_ocultos) if e.eh_dir]
+
+
 def formatar_tamanho(bytes_: int) -> str:
     if bytes_ < 1024:
         return f"{bytes_} B"
@@ -111,7 +117,7 @@ def formatar_data(timestamp: float) -> str:
 
 def locais_rapidos() -> list[tuple[str, str, str]]:
     """(rótulo, ícone, caminho) dos locais existentes do usuário."""
-    casa = os.path.expanduser("~")
+    casa = casa_do_usuario()
     candidatos = [
         ("Início", "inbox", casa),
         ("Documentos", "library", os.path.join(casa, "Documentos")),
@@ -191,18 +197,105 @@ class SeletorArquivos(ctk.CTkToplevel):
     def _sidebar(self, parent):
         c = get_colors()
         barra = ctk.CTkFrame(parent, fg_color=c["surface_elevated"], corner_radius=14,
-                             border_width=1, border_color=c["border"], width=190)
+                             border_width=1, border_color=c["border"], width=238)
         barra.pack(side="left", fill="y", padx=(0, 12), pady=2)
         barra.pack_propagate(False)
         ctk.CTkLabel(barra, text="Locais", font=FONTS["caption"],
-                     text_color=c["text_faint"]).pack(anchor="w", padx=14, pady=(14, 6))
+                     text_color=c["text_faint"]).pack(anchor="w", padx=14, pady=(14, 4))
+        self.arvore = scroll_frame(barra, fg_color="transparent")
+        self.arvore.pack(fill="both", expand=True, padx=(4, 2), pady=(0, 8))
+        self._nos_arvore: list[dict] = []
+        self._raizes: list[tuple[str, dict]] = []
         for rotulo, icone, caminho in locais_rapidos():
-            ctk.CTkButton(barra, text=f"  {rotulo}", image=get_icon(icone, 16, c["icon"]),
-                          anchor="w", height=32, corner_radius=8, fg_color="transparent",
-                          hover_color=c["surface_hover"], text_color=c["text"],
-                          font=FONTS["body_small"],
-                          command=lambda p=caminho: self._navegar(p)).pack(
-                fill="x", padx=8, pady=1)
+            no = self._no_arvore(self.arvore, rotulo, icone, caminho, 0)
+            self._raizes.append((caminho, no))
+
+    def _no_arvore(self, container, rotulo, icone, caminho, nivel):
+        """Linha da árvore + container de filhos (revelado sob demanda)."""
+        c = get_colors()
+        bloco = ctk.CTkFrame(container, fg_color="transparent")
+        bloco.pack(fill="x")
+        linha = ctk.CTkFrame(bloco, fg_color="transparent", corner_radius=8, height=28)
+        linha.pack(fill="x")
+        indent = min(nivel, 5) * 12
+        chev = ctk.CTkButton(linha, text="", width=18, height=18, corner_radius=6,
+                             fg_color="transparent", hover_color=c["surface_hover"],
+                             image=get_icon("chevron-right", 12, c["text_faint"]))
+        chev.pack(side="left", padx=(indent, 0))
+        ctk.CTkLabel(linha, text="", image=get_icon(icone, 15, c["icon"]),
+                     width=18).pack(side="left", padx=(2, 2))
+        nome = ctk.CTkButton(linha, text=rotulo, anchor="w", height=28, corner_radius=6,
+                             fg_color="transparent", hover_color=c["surface_hover"],
+                             text_color=c["text"], font=FONTS["body_small"],
+                             command=lambda p=caminho: self._navegar(p))
+        nome.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        filhos = ctk.CTkFrame(bloco, fg_color="transparent")
+        no = {
+            "caminho": caminho, "nivel": nivel, "linha": linha, "nome": nome,
+            "chev": chev, "filhos": filhos, "filhos_nos": [],
+            "aberto": False, "construido": False,
+        }
+        chev.configure(command=lambda n=no: self._alternar_no(n))
+        self._nos_arvore.append(no)
+        return no
+
+    def _alternar_no(self, no):
+        if no["aberto"]:
+            no["filhos"].pack_forget()
+            no["aberto"] = False
+            no["chev"].configure(image=get_icon("chevron-right", 12,
+                                                get_colors()["text_faint"]))
+            return
+        if not self._construir_filhos(no):
+            return
+        no["filhos"].pack(fill="x")
+        no["aberto"] = True
+        no["chev"].configure(image=get_icon("chevron-down", 12,
+                                            get_colors()["text_faint"]))
+
+    def _construir_filhos(self, no):
+        if no["construido"]:
+            return bool(no["filhos_nos"])
+        no["construido"] = True
+        for entrada in subpastas(no["caminho"]):
+            filho = self._no_arvore(no["filhos"], entrada.nome, "folder",
+                                    entrada.caminho, no["nivel"] + 1)
+            no["filhos_nos"].append(filho)
+        if not no["filhos_nos"]:
+            no["chev"].configure(state="disabled", image=None)
+            return False
+        return True
+
+    def _revelar_arvore(self):
+        """Abre a árvore até o diretório atual (só o ramo escolhido)."""
+        alvo = self.diretorio
+        candidatas = [(caminho, no) for caminho, no in self._raizes
+                      if alvo == caminho or alvo.startswith(caminho.rstrip(os.sep) + os.sep)]
+        if not candidatas:
+            return
+        caminho, no = max(candidatas, key=lambda item: len(item[0]))
+        self._expandir_no(no)
+        rel = os.path.relpath(alvo, caminho)
+        if rel == os.curdir:
+            return
+        for parte in rel.split(os.sep):
+            proximo = os.path.join(no["caminho"], parte)
+            filho = next((f for f in no["filhos_nos"] if f["caminho"] == proximo), None)
+            if not filho:
+                return
+            no = filho
+            self._expandir_no(no)
+
+    def _expandir_no(self, no):
+        if not no["aberto"]:
+            self._alternar_no(no)
+
+    def _realcar_arvore(self):
+        c = get_colors()
+        for no in self._nos_arvore:
+            atual = no["caminho"] == self.diretorio
+            no["linha"].configure(fg_color=c["primary_soft"] if atual else "transparent")
+            no["nome"].configure(text_color=c["primary"] if atual else c["text"])
 
     def _conteudo(self, parent):
         c = get_colors()
@@ -286,7 +379,7 @@ class SeletorArquivos(ctk.CTkToplevel):
             return os.path.abspath(inicial)
         if inicial and os.path.isfile(inicial):
             return os.path.dirname(os.path.abspath(inicial))
-        casa = os.path.expanduser("~")
+        casa = casa_do_usuario()
         if os.path.isdir(casa):
             return casa
         return os.path.abspath(os.sep)
@@ -302,6 +395,8 @@ class SeletorArquivos(ctk.CTkToplevel):
         self.ent_caminho.insert(0, caminho)
         self.lbl_sub.configure(text=caminho, text_color=get_colors()["text_muted"])
         self._render()
+        self._revelar_arvore()
+        self._realcar_arvore()
 
     def _subir(self):
         pai = os.path.dirname(self.diretorio.rstrip(os.sep)) or os.sep

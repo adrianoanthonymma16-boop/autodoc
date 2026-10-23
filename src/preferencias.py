@@ -5,16 +5,17 @@ Gerencia preferências do usuário salvas em JSON
 import json
 import os
 
-from config import PASTA_APP
+from config import PASTA_APP, casa_do_usuario
 
 PREFS_PATH = os.path.join(PASTA_APP, "prefs.json")
+_CASA = casa_do_usuario()
 
 DEFAULTS = {
     "tema": "cosmo",
     "tamanho_janela": "1280x820",
-    "ultimo_diretorio_modelo": os.path.expanduser("~"),
-    "ultimo_diretorio_anexo": os.path.expanduser("~"),
-    "ultimo_diretorio_saida": os.path.expanduser("~"),
+    "ultimo_diretorio_modelo": _CASA,
+    "ultimo_diretorio_anexo": _CASA,
+    "ultimo_diretorio_saida": _CASA,
     "pasta_saida_padrao": "",
     "padrao_nome_saida": "{modelo}",
     "organizar_por_data": False,

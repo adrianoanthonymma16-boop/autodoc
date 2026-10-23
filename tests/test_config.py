@@ -30,6 +30,19 @@ def test_pasta_app_respeita_variavel_de_ambiente(monkeypatch, tmp_path):
     assert _resolver_pasta_app() == str(alvo)
 
 
+def test_casa_do_usuario_prefere_snap_real_home(monkeypatch, tmp_path):
+    from config import casa_do_usuario
+    monkeypatch.setenv("SNAP_REAL_HOME", str(tmp_path))
+    assert casa_do_usuario() == str(tmp_path)
+
+
+def test_casa_do_usuario_sem_snap_usa_home(monkeypatch, tmp_path):
+    from config import casa_do_usuario
+    monkeypatch.delenv("SNAP_REAL_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert casa_do_usuario() == str(tmp_path)
+
+
 def test_modelo_extensions_include_odt_docx():
     assert ".odt" in MODELO_EXTENSOES
     assert ".docx" in MODELO_EXTENSOES

@@ -7,7 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
-from config import CONF_BOA, CONF_MEDIA
+from config import CONF_BOA, CONF_MEDIA, casa_do_usuario
 from fichas import listar_fichas, obter_ficha, salvar_ficha
 from historico import adicionar_ao_historico
 from logger import log_erro, log_info
@@ -132,7 +132,7 @@ class GerarView(ctk.CTkFrame):
     def _opcoes_saida(self):
         """Lê e persiste as opções de saída. Retorna (pasta, padrao, organizar)."""
         prefs=carregar_preferencias()
-        pasta=self.ent_pasta.get().strip() or prefs.get('pasta_saida_padrao') or prefs.get('ultimo_diretorio_saida', os.path.expanduser("~"))
+        pasta=self.ent_pasta.get().strip() or prefs.get('pasta_saida_padrao') or prefs.get('ultimo_diretorio_saida', casa_do_usuario())
         padrao=self.ent_padrao.get().strip() or "{modelo}"
         organizar=bool(self.chk_data.get())
         set_preferencia('pasta_saida_padrao', pasta)

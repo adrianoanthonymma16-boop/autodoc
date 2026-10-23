@@ -6,6 +6,7 @@ import os
 
 import customtkinter as ctk
 
+from config import casa_do_usuario
 from ui import messagebox
 from ui.components.widgets import card, empty_state, kpi_card, pill, scroll_frame, section_header
 from ui.file_dialog import escolher_arquivo, escolher_arquivos
@@ -169,7 +170,7 @@ class ModeloView(ctk.CTkFrame):
             return
         from preferencias import carregar_preferencias, set_preferencia
         prefs = carregar_preferencias()
-        dir_ini = prefs.get('ultimo_diretorio_modelo', os.path.expanduser("~"))
+        dir_ini = prefs.get('ultimo_diretorio_modelo', casa_do_usuario())
         caminho = escolher_arquivo(self, titulo="Selecione o modelo (ODT/DOCX)", filetypes=obter_filetypes_modelo(), inicial=dir_ini)
         if not caminho:
             return
@@ -184,7 +185,7 @@ class ModeloView(ctk.CTkFrame):
     def _adicionar_lote(self):
         from preferencias import carregar_preferencias
         prefs = carregar_preferencias()
-        dir_ini = prefs.get('ultimo_diretorio_modelo', os.path.expanduser("~"))
+        dir_ini = prefs.get('ultimo_diretorio_modelo', casa_do_usuario())
         caminhos = escolher_arquivos(self, titulo="Selecione modelos (ODT/DOCX)", filetypes=obter_filetypes_modelo(), inicial=dir_ini)
         for cam in caminhos:
             ok, msg = self.svc.adicionar_ao_lote(cam)

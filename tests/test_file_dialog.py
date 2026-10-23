@@ -11,6 +11,7 @@ from ui.file_dialog import (
     formatar_tamanho,
     listar,
     locais_rapidos,
+    subpastas,
     sufixos_dos_filetypes,
 )
 
@@ -86,11 +87,26 @@ def test_formatar_data_vazia():
     assert ":" in formatar_data(1_700_000_000)
 
 
+def test_subpastas_so_diretorios_ordenadas(tmp_path):
+    _criar(tmp_path, "zebra/", "Alfa/", "arquivo.docx", ".oculta/")
+    assert [e.nome for e in subpastas(tmp_path)] == ["Alfa", "zebra"]
+
+
 def test_locais_rapidos_so_existentes():
     locais = locais_rapidos()
     assert locais
     for _rotulo, _icone, caminho in locais:
         assert os.path.isdir(caminho)
+
+
+def test_locais_rapidos_usa_home_real_fora_do_home_do_snap(monkeypatch, tmp_path):
+    (tmp_path / "Documentos").mkdir()
+    (tmp_path / "Downloads").mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path / "snap-home"))
+    monkeypatch.setenv("SNAP_REAL_HOME", str(tmp_path))
+    caminhos = {rotulo: caminho for rotulo, _icone, caminho in locais_rapidos()}
+    assert caminhos["Início"] == str(tmp_path)
+    assert caminhos["Documentos"] == str(tmp_path / "Documentos")
 
 
 def test_entrada_eh_frozen():

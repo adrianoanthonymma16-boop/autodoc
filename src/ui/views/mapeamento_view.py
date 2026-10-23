@@ -9,6 +9,7 @@ import os
 
 import customtkinter as ctk
 
+from config import casa_do_usuario
 from ui import messagebox
 from ui.components.widgets import card, scroll_frame, section_header
 from ui.file_dialog import escolher_arquivo, salvar_arquivo
@@ -239,7 +240,7 @@ class MapeamentoView(ctk.CTkFrame):
             return
         from preferencias import carregar_preferencias, set_preferencia
         prefs=carregar_preferencias()
-        dir_ini=prefs.get('ultimo_diretorio_anexo', os.path.expanduser("~"))
+        dir_ini=prefs.get('ultimo_diretorio_anexo', casa_do_usuario())
         caminho=escolher_arquivo(self, titulo="Anexar documento fonte", filetypes=obter_filetypes_anexo(), inicial=dir_ini)
         if not caminho: return
         set_preferencia('ultimo_diretorio_anexo', os.path.dirname(caminho))

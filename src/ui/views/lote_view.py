@@ -10,6 +10,7 @@ import tkinter as tk
 
 import customtkinter as ctk
 
+from config import casa_do_usuario
 from historico import adicionar_ao_historico
 from logger import log_erro, log_info
 from preferencias import carregar_preferencias, set_preferencia
@@ -156,7 +157,7 @@ class LoteView(ctk.CTkFrame):
         caminho = escolher_arquivo(
             self, titulo="Escolher planilha",
             filetypes=[("Planilhas", "*.xlsx *.xlsm *.csv *.tsv"), ("Todos", "*.*")],
-            inicial=carregar_preferencias().get("ultimo_diretorio_planilha", os.path.expanduser("~")),
+            inicial=carregar_preferencias().get("ultimo_diretorio_planilha", casa_do_usuario()),
         )
         if not caminho:
             return
@@ -246,7 +247,7 @@ class LoteView(ctk.CTkFrame):
 
     # --- saída ---
     def _escolher_pasta(self):
-        inicial = self.ent_pasta.get().strip() or os.path.expanduser("~")
+        inicial = self.ent_pasta.get().strip() or casa_do_usuario()
         pasta = escolher_pasta(self, titulo="Pasta de saída", inicial=inicial)
         if not pasta:
             return
@@ -256,7 +257,7 @@ class LoteView(ctk.CTkFrame):
     def _opcoes_saida(self):
         prefs = carregar_preferencias()
         pasta = (self.ent_pasta.get().strip() or prefs.get("pasta_saida_padrao")
-                 or prefs.get("ultimo_diretorio_saida", os.path.expanduser("~")))
+                 or prefs.get("ultimo_diretorio_saida", casa_do_usuario()))
         padrao = self.ent_padrao.get().strip() or "{modelo}_{indice}"
         organizar = bool(self.chk_data.get())
         set_preferencia("pasta_saida_padrao", pasta)

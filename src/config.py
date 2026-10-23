@@ -11,6 +11,15 @@ VERSAO = "4.0-premium"
 CONF_BOA = 80.0
 CONF_MEDIA = 55.0
 
+def casa_do_usuario() -> str:
+    """Home real do usuário.
+
+    Dentro do snap, HOME aponta para a pasta da revisão
+    (~/snap/<app>/<rev>); $SNAP_REAL_HOME guarda o home verdadeiro.
+    """
+    return os.environ.get("SNAP_REAL_HOME") or os.path.expanduser("~")
+
+
 # Pasta do usuário para salvar configurações
 def _resolver_pasta_app() -> str:
     """Permite que o snap redirecione os dados para $SNAP_USER_COMMON."""
